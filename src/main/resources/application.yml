@@ -1,0 +1,3 @@
+spring:
+    application:
+        name: choimory-io-member-external-api
