@@ -1,4 +1,6 @@
 package io.choimory.member.external.api.member.v1.query.repository
 
-interface MemberQueryRepository {
-}
+import org.springframework.stereotype.Repository
+
+@Repository
+interface MemberQueryRepository

@@ -1,3 +1,6 @@
 package io.choimory.member.external.api.member.v1.command.repository
 
+import org.springframework.stereotype.Repository
+
+@Repository
 interface MemberCommandRepository
