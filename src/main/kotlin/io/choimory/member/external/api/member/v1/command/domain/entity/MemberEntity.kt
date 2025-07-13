@@ -1,6 +1,6 @@
 package io.choimory.member.external.api.member.v1.command.domain.entity
 
-import io.choimory.member.external.api.common.entity.CommonDateEntity
+import io.choimory.member.external.api.common.domain.CommonDateEntity
 import jakarta.persistence.Entity
 import jakarta.persistence.Id
 
