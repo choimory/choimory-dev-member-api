@@ -16,3 +16,14 @@ spring:
     uris: ${es-url}:${es-port}
     username: ${es-user}
     password: ${es-password}
+
+  data:
+    redis:
+      host: ${redis-host}
+      port: ${redis-port}
+      database: ${redis-database}
+      username: ${redis-user}
+      password: ${redis-password}
+  cache:
+    redis:
+      time-to-live: 6000000 #(ms) # -1 to infinite
