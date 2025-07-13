@@ -7,5 +7,5 @@ import org.springframework.stereotype.Component
 @Component
 class MemberCommandHandler(
     private val memberCommandRepository: MemberCommandRepository,
-    private val redisTemplate: RedisTemplate<String, Any>
+    private val redisTemplate: RedisTemplate<String, Any>,
 )

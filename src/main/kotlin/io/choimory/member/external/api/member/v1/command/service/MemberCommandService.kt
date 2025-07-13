@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service
 class MemberCommandService(
     private val memberCommandHandler: MemberCommandHandler,
 ) {
-    fun signup(payload: CreateMemberRequest): CreateMemberResponse  {
+    fun signup(payload: CreateMemberRequest): CreateMemberResponse {
         // 비밀번호 암호화
         // 인증코드 생성
         // Redis set
@@ -19,7 +19,7 @@ class MemberCommandService(
         return CreateMemberResponse()
     }
 
-    fun verify(payload: VerifyMemberRequest): VerifyMemberResponse  {
+    fun verify(payload: VerifyMemberRequest): VerifyMemberResponse {
         // Redis get
         // 인증코드 검증
         // Save Member
