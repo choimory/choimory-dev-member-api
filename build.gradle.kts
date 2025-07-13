@@ -34,6 +34,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+    implementation("co.elastic.clients:elasticsearch-java:8.12.2")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")

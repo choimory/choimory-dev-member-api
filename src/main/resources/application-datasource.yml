@@ -11,3 +11,8 @@ spring:
     hikari:
       maximum-pool-size: 10
       max-lifetime: 28500000 #DB WAIT_TIMEOUT -> 28800 (28800000)
+
+  elasticsearch:
+    uris: ${es-url}:${es-port}
+    username: ${es-user}
+    password: ${es-password}
