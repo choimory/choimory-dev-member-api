@@ -21,9 +21,10 @@ spring:
     redis:
       host: ${redis-host}
       port: ${redis-port}
-      database: ${redis-database}
-      username: ${redis-user}
-      password: ${redis-password}
+      database: ${redis-database} # 기본: 0
+      username: ${redis-user} # 공백으로 생략 가능
+      password: ${redis-password} # 공백으로 생략 가능
   cache:
+    type: redis # cache 사용시, 선택적
     redis:
-      time-to-live: 6000000 #(ms) # -1 to infinite
+      time-to-live: 6000000 #(ms) # 만료없음: -1
