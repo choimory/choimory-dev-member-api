@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: datasource
+
+  datasource:
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://${rdb-url}:${rdb-port}/${rdb-database}
+    username: ${rdb-user}
+    password: ${rdb-password}
+    hikari:
+      maximum-pool-size: 10
+      max-lifetime: 28500000 #DB WAIT_TIMEOUT -> 28800 (28800000)
