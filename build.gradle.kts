@@ -4,6 +4,7 @@ plugins {
     id("org.springframework.boot") version "3.5.4-SNAPSHOT"
     id("io.spring.dependency-management") version "1.1.7"
     kotlin("plugin.jpa") version "1.9.25"
+    id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
 }
 
 group = "io.choimory"
@@ -33,6 +34,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
+    implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
+    implementation("co.elastic.clients:elasticsearch-java:8.12.2")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")

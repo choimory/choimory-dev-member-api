@@ -1,0 +1,25 @@
+server:
+    port: 8080
+
+spring:
+    application:
+        name: choimory-io-member-external-api
+
+    profiles:
+        include: datasource
+        group:
+            default: prod
+            prod: prod
+            dev: dev
+            local: local, sql-init
+
+    jpa:
+        open-in-view: false
+        show-sql: false
+        generate-ddl: false
+        hibernate:
+            ddl-auto: none
+        properties:
+            hibernate:
+                show_sql: false
+                format_sql: false
