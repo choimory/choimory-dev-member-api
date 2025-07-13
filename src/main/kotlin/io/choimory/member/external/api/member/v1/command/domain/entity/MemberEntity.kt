@@ -9,6 +9,7 @@ class MemberEntity(
     @Id
     var id: String,
     var email: String,
+    var nickname: String,
     var password: String,
     var introduce: String,
 ) : CommonDateEntity()

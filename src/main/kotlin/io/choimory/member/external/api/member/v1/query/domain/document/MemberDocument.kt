@@ -9,6 +9,7 @@ class MemberDocument(
     @Id
     val id: String,
     val email: String,
+    val nickname: String,
     val password: String,
     val introduce: String,
     val commonDate: CommonDateDocument,

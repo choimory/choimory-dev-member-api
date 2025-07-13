@@ -7,5 +7,5 @@ import org.springframework.stereotype.Component
 @Component
 class MemberQueryHandler(
     private val memberQueryRepository: MemberQueryRepository,
-    private val memberQueryClient: MemberQueryClient
+    private val memberQueryClient: MemberQueryClient,
 )
