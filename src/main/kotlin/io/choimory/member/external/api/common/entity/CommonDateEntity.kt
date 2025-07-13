@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener::class)
-abstract class CommonDate {
+abstract class CommonDateEntity {
     @CreatedDate
     @Column(updatable = false)
     lateinit var createdAt: LocalDateTime
