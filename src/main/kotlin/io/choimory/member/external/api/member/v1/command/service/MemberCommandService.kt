@@ -12,6 +12,8 @@ class MemberCommandService(
 ) {
     fun signup(payload: CreateMemberRequest): CreateMemberResponse {
         // 비밀번호 암호화
+        val encodedPassword: String = memberCommandHandler.encodePassword(payload.password)
+
         // 인증코드 생성
         // Redis set
         // 이메일 발송
