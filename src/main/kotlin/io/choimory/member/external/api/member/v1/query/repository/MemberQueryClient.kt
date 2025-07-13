@@ -4,6 +4,6 @@ import co.elastic.clients.elasticsearch.ElasticsearchClient
 import org.springframework.stereotype.Repository
 
 @Repository
-class MemberQueryClientRepository(
+class MemberQueryClient(
     private val client: ElasticsearchClient,
 )
