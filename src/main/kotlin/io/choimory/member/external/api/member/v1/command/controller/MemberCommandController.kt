@@ -23,7 +23,7 @@ class MemberCommandController(
     @ResponseStatus(HttpStatus.OK)
     fun signup(
         @Valid payload: CreateMemberRequest,
-    ): CreateMemberResponse  {
+    ): CreateMemberResponse {
         return memberCommandService.signup(payload)
     }
 
@@ -31,7 +31,7 @@ class MemberCommandController(
     @ResponseStatus(HttpStatus.CREATED)
     fun verify(
         @Valid payload: VerifyMemberRequest,
-    ): VerifyMemberResponse  {
+    ): VerifyMemberResponse {
         return memberCommandService.verify(payload)
     }
 }
