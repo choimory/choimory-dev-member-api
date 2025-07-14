@@ -19,7 +19,7 @@ class MemberCommandHandler(
         return passwordEncoder.encode(password)
     }
 
-    fun generateVerifyCode(): Int  {
+    fun generateVerifyCode(): Int {
         TODO()
     }
 
@@ -28,26 +28,26 @@ class MemberCommandHandler(
         ttl: Int,
         timeUnit: TimeUnit,
         member: MemberDto,
-    )  {
+    ) {
         TODO("redis set with verify code")
     }
 
-    fun sendEmailWithVerifyCode(member: MemberDto)  {
+    fun sendEmailWithVerifyCode(member: MemberDto) {
         TODO()
     }
 
     fun getWaitVerifyMember(
         verifyCode: Int,
         email: String,
-    ): MemberDto?  {
+    ): MemberDto? {
         TODO("redis get with verify code")
     }
 
-    fun saveVerifiedMember(member: MemberDto): MemberEntity  {
+    fun saveVerifiedMember(member: MemberDto): MemberEntity {
         TODO()
     }
 
-    fun generateToken(member: MemberDto): VerifyMemberResponse  {
+    fun generateToken(member: MemberDto): VerifyMemberResponse {
         TODO("generate access token, refresh token")
     }
 }
