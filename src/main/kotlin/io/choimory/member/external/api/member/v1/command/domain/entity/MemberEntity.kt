@@ -5,7 +5,13 @@ import jakarta.persistence.Entity
 import jakarta.persistence.Id
 
 @Entity
-class MemberEntity(id: String?, email: String?, nickname: String?, password: String?, introduce: String?) :
+class MemberEntity(
+    id: String? = null,
+    email: String? = null,
+    nickname: String? = null,
+    password: String? = null,
+    introduce: String? = null,
+) :
     CommonDateEntity() {
     @Id
     var id: String? = id
