@@ -6,22 +6,10 @@ import jakarta.persistence.Id
 
 @Entity
 class MemberEntity(
-    id: String? = null,
-    email: String? = null,
-    nickname: String? = null,
-    password: String? = null,
-    introduce: String? = null,
-) :
-    CommonDateEntity() {
     @Id
-    var id: String? = id
-        protected set
-    var email: String? = email
-        protected set
-    var nickname: String? = nickname
-        protected set
-    var password: String? = password
-        protected set
-    var introduce: String? = introduce
-        protected set
-}
+    var id: String? = null,
+    var email: String? = null,
+    var nickname: String? = null,
+    var password: String? = null,
+    var introduce: String? = null,
+) : CommonDateEntity()
