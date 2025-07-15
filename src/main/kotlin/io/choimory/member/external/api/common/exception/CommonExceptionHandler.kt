@@ -46,7 +46,7 @@ class CommonExceptionHandler {
     // Spring security
     @ExceptionHandler(AuthenticationException::class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    fun authenticateException()  {
+    fun authenticateException() {
         TODO()
     }
 }
