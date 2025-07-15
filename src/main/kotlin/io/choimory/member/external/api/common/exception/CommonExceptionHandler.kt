@@ -10,7 +10,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestControllerAdvice
-import java.util.stream.Collectors
 
 @RestControllerAdvice("io.choimory")
 class CommonExceptionHandler {
@@ -61,7 +60,7 @@ class CommonExceptionHandler {
                         f.rejectedValue,
                         f.defaultMessage,
                     )
-                }.collect(Collectors.toUnmodifiableList()),
+                }.toList(),
         )
     }
 
@@ -79,7 +78,7 @@ class CommonExceptionHandler {
                         v.invalidValue,
                         v.message,
                     )
-                }.collect(Collectors.toUnmodifiableList()),
+                }.toList(),
         )
     }
 
