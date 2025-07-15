@@ -1,4 +1,4 @@
-package io.choimory.member.external.api.common.domain
+package io.choimory.member.external.api.common.domain.document
 
 import java.time.LocalDateTime
 

@@ -1,6 +1,6 @@
 package io.choimory.member.external.api.member.v1.query.domain.document
 
-import io.choimory.member.external.api.common.domain.CommonDateDocument
+import io.choimory.member.external.api.common.domain.document.CommonDateDocument
 import org.springframework.data.annotation.Id
 import org.springframework.data.elasticsearch.annotations.Document
 

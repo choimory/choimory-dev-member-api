@@ -1,4 +1,4 @@
-package io.choimory.member.external.api.common.domain
+package io.choimory.member.external.api.common.domain.entity
 
 import jakarta.persistence.Column
 import jakarta.persistence.EntityListeners

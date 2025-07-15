@@ -1,4 +1,4 @@
-package io.choimory.member.external.api.common.dto.response
+package io.choimory.member.external.api.common.domain.response
 
 data class CommonResponse<T>(
     val code: Int,
