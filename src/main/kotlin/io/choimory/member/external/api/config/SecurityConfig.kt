@@ -22,9 +22,4 @@ class SecurityConfig {
 
         return http.build()
     }
-
-    @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
 }
