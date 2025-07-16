@@ -2,6 +2,7 @@ package io.choimory.member.external.api.common.exception
 
 import io.choimory.member.external.api.common.domain.dto.CommonValidateResult
 import io.choimory.member.external.api.common.domain.response.CommonResponse
+import io.github.oshai.kotlinlogging.KotlinLogging
 import jakarta.validation.ConstraintViolationException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
@@ -13,10 +14,12 @@ import org.springframework.web.bind.annotation.RestControllerAdvice
 
 @RestControllerAdvice("io.choimory")
 class CommonExceptionHandler {
+    private val log = KotlinLogging.logger { }
+
     @ExceptionHandler(Exception::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     fun exception(e: Exception): CommonResponse<String> {
-        e.printStackTrace()
+        log.error { "${e.message}" }
         return CommonResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             HttpStatus.INTERNAL_SERVER_ERROR.reasonPhrase,
@@ -27,7 +30,7 @@ class CommonExceptionHandler {
     @ExceptionHandler(RuntimeException::class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     fun runtimeException(e: RuntimeException): CommonResponse<String> {
-        e.printStackTrace()
+        log.error { "${e.message}" }
         return CommonResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
             HttpStatus.INTERNAL_SERVER_ERROR.reasonPhrase,

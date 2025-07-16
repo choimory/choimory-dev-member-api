@@ -37,6 +37,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     implementation("co.elastic.clients:elasticsearch-java:8.12.2")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("io.github.oshai:kotlin-logging-jvm:5.1.1")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
