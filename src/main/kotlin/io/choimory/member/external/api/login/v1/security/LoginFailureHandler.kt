@@ -22,11 +22,12 @@ class LoginFailureHandler(val objectMapper: ObjectMapper) : AuthenticationFailur
         response.contentType = MediaType.APPLICATION_JSON_VALUE
         response.characterEncoding = "UTF-8"
 
-        objectMapper.writeValue(
-            response.writer,
-            CommonResponse<Nothing>(
-                HttpStatus.UNAUTHORIZED.value(),
-                exception?.message ?: HttpStatus.UNAUTHORIZED.reasonPhrase,
+        response.writer.write(
+            objectMapper.writeValueAsString(
+                CommonResponse<Nothing>(
+                    HttpStatus.UNAUTHORIZED.value(),
+                    exception?.message ?: HttpStatus.UNAUTHORIZED.reasonPhrase,
+                ),
             ),
         )
     }

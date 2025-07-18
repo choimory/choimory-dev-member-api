@@ -34,12 +34,13 @@ class LoginSuccessHandler(
         // TODO redis 등록
 
         // 응답
-        objectMapper.writeValue(
-            response.writer,
-            CommonResponse(
-                HttpStatus.OK.value(),
-                HttpStatus.OK.reasonPhrase,
-                LoginResponse("access-token", "refresh-token"),
+        response.writer.write(
+            objectMapper.writeValueAsString(
+                CommonResponse(
+                    HttpStatus.OK.value(),
+                    HttpStatus.OK.reasonPhrase,
+                    LoginResponse("access-token", "refresh-token"),
+                ),
             ),
         )
     }
