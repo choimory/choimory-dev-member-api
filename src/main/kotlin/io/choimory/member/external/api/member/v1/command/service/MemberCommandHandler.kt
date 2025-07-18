@@ -1,6 +1,6 @@
 package io.choimory.member.external.api.member.v1.command.service
 
-import io.choimory.member.external.api.member.v1.command.domain.dto.MemberDto
+import io.choimory.member.external.api.member.v1.command.domain.dto.MemberCommandDto
 import io.choimory.member.external.api.member.v1.command.domain.entity.MemberEntity
 import io.choimory.member.external.api.member.v1.command.domain.response.VerifyMemberResponse
 import io.choimory.member.external.api.member.v1.command.repository.MemberCommandRepository
@@ -27,27 +27,27 @@ class MemberCommandHandler(
         verifyCode: Int,
         ttl: Int,
         timeUnit: TimeUnit,
-        member: MemberDto,
+        member: MemberCommandDto,
     ) {
         TODO("redis set with verify code")
     }
 
-    fun sendEmailWithVerifyCode(member: MemberDto) {
+    fun sendEmailWithVerifyCode(member: MemberCommandDto) {
         TODO()
     }
 
     fun getWaitVerifyMember(
         verifyCode: Int,
         email: String,
-    ): MemberDto? {
+    ): MemberCommandDto? {
         TODO("redis get with verify code")
     }
 
-    fun saveVerifiedMember(member: MemberDto): MemberEntity {
+    fun saveVerifiedMember(member: MemberCommandDto): MemberEntity {
         TODO()
     }
 
-    fun generateToken(member: MemberDto): VerifyMemberResponse {
+    fun generateToken(member: MemberCommandDto): VerifyMemberResponse {
         TODO("generate access token, refresh token")
     }
 }
