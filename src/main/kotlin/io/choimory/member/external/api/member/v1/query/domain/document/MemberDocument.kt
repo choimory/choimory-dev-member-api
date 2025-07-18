@@ -10,18 +10,13 @@ import org.springframework.data.elasticsearch.annotations.FieldType
 class MemberDocument(
     @Id
     val id: String,
-
     @Field(type = FieldType.Keyword)
     val email: String,
-
     @Field(type = FieldType.Keyword)
     val nickname: String,
-
     @Field(type = FieldType.Keyword)
     val password: String,
-
     @Field(type = FieldType.Keyword)
     val introduce: String,
-
     val commonDate: CommonDateDocument,
 )

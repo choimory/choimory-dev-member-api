@@ -1,10 +1,10 @@
 package io.choimory.member.external.api.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import io.choimory.member.external.api.login.LoginAuthProvider
-import io.choimory.member.external.api.login.LoginFailureHandler
-import io.choimory.member.external.api.login.LoginProcessFilter
-import io.choimory.member.external.api.login.LoginSuccessHandler
+import io.choimory.member.external.api.login.v1.security.LoginAuthProvider
+import io.choimory.member.external.api.login.v1.security.LoginFailureHandler
+import io.choimory.member.external.api.login.v1.security.LoginProcessFilter
+import io.choimory.member.external.api.login.v1.security.LoginSuccessHandler
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.authentication.AuthenticationManager

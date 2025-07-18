@@ -1,9 +1,9 @@
-package io.choimory.member.external.api.login
+package io.choimory.member.external.api.login.v1.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.choimory.member.external.api.common.domain.response.CommonResponse
 import io.choimory.member.external.api.login.domain.response.LoginResponse
-import io.choimory.member.external.api.token.domain.TokenDetails
+import io.choimory.member.external.api.token.v1.domain.TokenDetails
 import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.http.HttpStatus

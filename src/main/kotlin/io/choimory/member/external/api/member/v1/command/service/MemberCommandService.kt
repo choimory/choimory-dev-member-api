@@ -1,6 +1,6 @@
 package io.choimory.member.external.api.member.v1.command.service
 
-import io.choimory.member.external.api.member.v1.command.domain.dto.MemberCommandDto
+import io.choimory.member.external.api.member.v1.command.domain.dto.MemberEntityDto
 import io.choimory.member.external.api.member.v1.command.domain.request.CreateMemberRequest
 import io.choimory.member.external.api.member.v1.command.domain.request.VerifyMemberRequest
 import io.choimory.member.external.api.member.v1.command.domain.response.CreateMemberResponse
@@ -17,7 +17,7 @@ class MemberCommandService(
     fun signup(payload: CreateMemberRequest): CreateMemberResponse {
         // 비밀번호 암호화
         val encodedPassword: String = memberCommandHandler.encodePassword(payload.password)
-        val member: MemberCommandDto = MemberCommandDto()
+        val member: MemberEntityDto = MemberEntityDto()
 
         // 인증코드 생성
         val verifyCode: Int = memberCommandHandler.generateVerifyCode()
@@ -34,7 +34,7 @@ class MemberCommandService(
     @Transactional
     fun verify(payload: VerifyMemberRequest): VerifyMemberResponse {
         // Redis get
-        val member: MemberCommandDto =
+        val member: MemberEntityDto =
             requireNotNull(memberCommandHandler.getWaitVerifyMember(payload.verifyCode, payload.email)) { throw IllegalArgumentException() }
 
         // Save Member

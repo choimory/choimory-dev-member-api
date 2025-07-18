@@ -1,9 +1,9 @@
-package io.choimory.member.external.api.login
+package io.choimory.member.external.api.login.v1.security
 
 import io.choimory.member.external.api.common.exception.CommonException
-import io.choimory.member.external.api.member.v1.query.domain.dto.MemberQueryDto
+import io.choimory.member.external.api.member.v1.query.domain.dto.MemberDocumentDto
 import io.choimory.member.external.api.member.v1.query.service.MemberQueryService
-import io.choimory.member.external.api.token.domain.TokenDetails
+import io.choimory.member.external.api.token.v1.domain.TokenDetails
 import org.springframework.http.HttpStatus
 import org.springframework.security.authentication.AuthenticationProvider
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
@@ -24,7 +24,7 @@ class LoginAuthProvider(
         }
 
         // 별도 비즈니스 로직에서 검증
-        val member: MemberQueryDto = memberQueryService.login(email, password)
+        val member: MemberDocumentDto = memberQueryService.login(email, password)
 
         // 토큰 Claim에 사용할 객체로 변경
         val details: TokenDetails = TokenDetails.of(member)

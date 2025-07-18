@@ -1,9 +1,6 @@
 package io.choimory.member.external.api.member.v1.query.service
 
-import io.choimory.member.external.api.member.v1.query.domain.document.MemberDocument
-import io.choimory.member.external.api.member.v1.query.domain.dto.MemberQueryDto
-import org.springframework.security.authentication.BadCredentialsException
-import org.springframework.security.crypto.password.PasswordEncoder
+import io.choimory.member.external.api.member.v1.query.domain.dto.MemberDocumentDto
 import org.springframework.stereotype.Service
 
 @Service
@@ -13,9 +10,9 @@ class MemberQueryService(
     fun login(
         email: String,
         password: String,
-    ): MemberQueryDto {
+    ): MemberDocumentDto {
         // 검증, 조회
-        val member:MemberQueryDto = memberQueryHandler.loginAndValid(email, password)
+        val member: MemberDocumentDto = memberQueryHandler.loginAndValid(email, password)
 
         // 응답
         return member

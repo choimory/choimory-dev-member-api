@@ -1,4 +1,4 @@
-package io.choimory.member.external.api.login
+package io.choimory.member.external.api.login.v1.security
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import io.choimory.member.external.api.common.domain.response.CommonResponse
