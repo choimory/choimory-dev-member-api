@@ -12,10 +12,10 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler
 
 class LoginProcessFilter(
-    val url: String,
-    val authenticationManager: AuthenticationManager,
-    val successHandler: AuthenticationSuccessHandler,
-    val failureHandler: AuthenticationFailureHandler,
+    url: String,
+    authenticationManager: AuthenticationManager,
+    successHandler: AuthenticationSuccessHandler,
+    failureHandler: AuthenticationFailureHandler,
     val objectMapper: ObjectMapper,
 ) : AbstractAuthenticationProcessingFilter(
         url,
@@ -37,6 +37,6 @@ class LoginProcessFilter(
         val token: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(loginRequest.email, loginRequest.password)
 
         // step to provider
-        return authenticationManager.authenticate(token)
+        return this.authenticationManager.authenticate(token)
     }
 }
