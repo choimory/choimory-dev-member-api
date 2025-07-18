@@ -9,12 +9,12 @@ import org.springframework.security.crypto.password.PasswordEncoder
 @Configuration
 class AppConfig {
     @Bean
-    fun passwordEncoder(): PasswordEncoder  {
+    fun passwordEncoder(): PasswordEncoder {
         return BCryptPasswordEncoder()
     }
 
     @Bean
-    fun objectMapper(): ObjectMapper  {
+    fun objectMapper(): ObjectMapper {
         return ObjectMapper()
     }
 }
