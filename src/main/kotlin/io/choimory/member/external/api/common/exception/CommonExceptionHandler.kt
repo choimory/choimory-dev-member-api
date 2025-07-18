@@ -42,8 +42,8 @@ class CommonExceptionHandler {
     fun commonException(e: CommonException): ResponseEntity<CommonResponse<String>> {
         return ResponseEntity(
             CommonResponse(
-                e.status.value(),
-                e.msg,
+                e.code ?: e.status.value(),
+                e.msg ?: e.status.reasonPhrase,
             ),
             e.status,
         )
