@@ -19,15 +19,15 @@ class MemberCommandHandler(
         return passwordEncoder.encode(password)
     }
 
-    fun generateVerifyCode(): Int {
-        TODO()
+    fun generateVerifyCode(): String {
+        return (100000..999999).random().toString()
     }
 
     fun setWaitVerifyMember(
-        verifyCode: Int,
+        member: MemberEntityDto,
+        verifyCode: String,
         ttl: Int,
         timeUnit: TimeUnit,
-        member: MemberEntityDto,
     ) {
         TODO("redis set with verify code")
     }
@@ -37,8 +37,9 @@ class MemberCommandHandler(
     }
 
     fun getWaitVerifyMember(
-        verifyCode: Int,
+        uuid:String,
         email: String,
+        verifyCode: Int,
     ): MemberEntityDto? {
         TODO("redis get with verify code")
     }

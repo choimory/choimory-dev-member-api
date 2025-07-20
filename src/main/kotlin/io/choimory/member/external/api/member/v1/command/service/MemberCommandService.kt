@@ -1,5 +1,6 @@
 package io.choimory.member.external.api.member.v1.command.service
 
+import com.github.f4b6a3.uuid.UuidCreator
 import io.choimory.member.external.api.member.v1.command.domain.dto.MemberEntityDto
 import io.choimory.member.external.api.member.v1.command.domain.request.CreateMemberRequest
 import io.choimory.member.external.api.member.v1.command.domain.request.VerifyMemberRequest
@@ -14,16 +15,18 @@ import java.util.concurrent.TimeUnit
 class MemberCommandService(
     private val memberCommandHandler: MemberCommandHandler,
 ) {
-    fun signup(payload: CreateMemberRequest): CreateMemberResponse {
+    fun signup(request: CreateMemberRequest): CreateMemberResponse {
         // 비밀번호 암호화
-        val encodedPassword: String = memberCommandHandler.encodePassword(payload.password)
-        val member: MemberEntityDto = MemberEntityDto()
+        val encodedPassword: String = memberCommandHandler.encodePassword(request.password)
 
-        // 인증코드 생성
-        val verifyCode: Int = memberCommandHandler.generateVerifyCode()
+        // UUID, 인증코드 생성
+        val uuid: String = UuidCreator.getTimeOrderedEpoch().toString()
+        val verifyCode: String = memberCommandHandler.generateVerifyCode()
 
         // Redis set
-        memberCommandHandler.setWaitVerifyMember(verifyCode, 3, TimeUnit.MINUTES, member)
+        val member: MemberEntityDto =
+            MemberEntityDto(id = uuid, email = request.email, password = encodedPassword, nickname = request.nickname, introduce = request.introduce)
+        memberCommandHandler.setWaitVerifyMember(member, verifyCode, 3, TimeUnit.MINUTES)
 
         // 이메일 발송
         memberCommandHandler.sendEmailWithVerifyCode(member)
@@ -35,7 +38,7 @@ class MemberCommandService(
     fun verify(payload: VerifyMemberRequest): VerifyMemberResponse {
         // Redis get
         val member: MemberEntityDto =
-            requireNotNull(memberCommandHandler.getWaitVerifyMember(payload.verifyCode, payload.email)) { throw IllegalArgumentException() }
+            requireNotNull(memberCommandHandler.getWaitVerifyMember(payload.uuid, payload.email, payload.verifyCode)) { throw IllegalArgumentException() }
 
         // Save Member
         memberCommandHandler.saveVerifiedMember(member)

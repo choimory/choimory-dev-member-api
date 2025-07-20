@@ -39,6 +39,7 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("io.github.oshai:kotlin-logging-jvm:5.1.1")
     implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+    implementation("com.github.f4b6a3:uuid-creator:5.3.2")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
