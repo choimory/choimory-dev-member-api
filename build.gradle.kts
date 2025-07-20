@@ -38,6 +38,7 @@ dependencies {
     implementation("co.elastic.clients:elasticsearch-java:8.12.2")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
     implementation("io.github.oshai:kotlin-logging-jvm:5.1.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
     compileOnly("org.projectlombok:lombok")
     developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
