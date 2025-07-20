@@ -16,7 +16,7 @@ class LoginProcessFilter(
     authenticationManager: AuthenticationManager,
     successHandler: AuthenticationSuccessHandler,
     failureHandler: AuthenticationFailureHandler,
-    val objectMapper: ObjectMapper,
+    private val objectMapper: ObjectMapper,
 ) : AbstractAuthenticationProcessingFilter(
         url,
         authenticationManager,
@@ -31,7 +31,7 @@ class LoginProcessFilter(
         response: HttpServletResponse?,
     ): Authentication {
         // 요청 playload를 객체로 변환
-        val loginRequest: LoginRequest = objectMapper.readValue(request?.inputStream, LoginRequest::class.java)
+        val loginRequest: LoginRequest = objectMapper.readValue(request!!.inputStream, LoginRequest::class.java)
 
         // security 제공 객체로 변환
         val token: UsernamePasswordAuthenticationToken = UsernamePasswordAuthenticationToken(loginRequest.email, loginRequest.password)
