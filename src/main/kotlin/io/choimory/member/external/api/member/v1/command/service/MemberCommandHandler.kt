@@ -1,5 +1,7 @@
 package io.choimory.member.external.api.member.v1.command.service
 
+import io.choimory.member.external.api.mail.v1.domain.dto.MailDto
+import io.choimory.member.external.api.mail.v1.handler.MailHandler
 import io.choimory.member.external.api.member.v1.command.domain.dto.MemberEntityDto
 import io.choimory.member.external.api.member.v1.command.domain.entity.MemberEntity
 import io.choimory.member.external.api.member.v1.command.domain.response.VerifyMemberResponse
@@ -14,6 +16,7 @@ class MemberCommandHandler(
     private val memberCommandRepository: MemberCommandRepository,
     private val redisTemplate: RedisTemplate<String, Any>,
     private val passwordEncoder: PasswordEncoder,
+    private val mailHandler: MailHandler,
 ) {
     fun encodePassword(password: String): String {
         return passwordEncoder.encode(password)
