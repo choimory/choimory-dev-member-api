@@ -1,0 +1,22 @@
+POST http://localhost:8080/v1/member/signup
+Content-Type: application/json
+
+{
+  "email": "choimory@naver.com",
+  "password": "mypw",
+  "nickname": "choimory",
+  "introduce":""
+}
+
+###
+
+POST http://localhost:8080/v1/member/verify
+Content-Type: application/json
+#Authorization: Bearer tneIq7PjCK9+j0cF6TkJNHLtVj/MU/zuyOSQ0G5DfIpdBKVqNvr+BR0Duy5HFgm2eaIAcQAreqoPsQc1hMw+MhZQTrsvyaZFDmTdebTizgXK9AEq12/4pr2UH4nvRVUpTtdnr6K72c5LgZjrGvoyO0gjhH5OEIusYx9RQud2i4lzp8XEPSbd9ZNqHyUwGr+yrotZwV6das6cP2q9q8YU3h0z7VglRjM4sZitPrsLCkGEVosh1o2I0gX7tCsbOcGD13pYdXANzXCukIrtCOl+V1Aul8U5tFowebzd2Vgfxy2geCYKfoNm2CMkg+AlJl/DD4ezYy14JW3O74bOA/4WVx3TuKLXigvE0kICs/08PLejgnf++rmYsRWFhP52YYi6KgIpBlDrw7NhpH0sYR23dA==
+
+{
+  "email": "choimory@naver.com",
+  "uuid": "",
+  "verifyCode": 123123
+}
+
