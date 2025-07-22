@@ -1,6 +1,5 @@
 package io.choimory.member.external.api.member.v1.command.service
 
-import io.choimory.member.external.api.mail.v1.domain.dto.MailDto
 import io.choimory.member.external.api.mail.v1.handler.MailHandler
 import io.choimory.member.external.api.member.v1.command.domain.dto.MemberEntityDto
 import io.choimory.member.external.api.member.v1.command.domain.entity.MemberEntity
@@ -29,10 +28,10 @@ class MemberCommandHandler(
     fun setWaitVerifyMember(
         member: MemberEntityDto,
         verifyCode: String,
-        ttl: Int,
+        ttl: Long,
         timeUnit: TimeUnit,
     ) {
-        TODO("redis set with verify code")
+        redisTemplate.opsForValue().set("${member.id}:$verifyCode", member, ttl, timeUnit)
     }
 
     fun sendEmailWithVerifyCode(member: MemberEntityDto) {
@@ -40,18 +39,22 @@ class MemberCommandHandler(
     }
 
     fun getWaitVerifyMember(
-        uuid:String,
+        uuid: String,
         email: String,
         verifyCode: Int,
     ): MemberEntityDto? {
-        TODO("redis get with verify code")
+        val member = redisTemplate.opsForValue().get("$uuid:$verifyCode") as? MemberEntityDto
+        return member
     }
 
-    fun saveVerifiedMember(member: MemberEntityDto): MemberEntity {
-        TODO()
+    fun saveVerifiedMember(member: MemberEntityDto): MemberEntityDto {
+        val memberEntity: MemberEntity = MemberEntityDto.toEntity(member)
+        val result: MemberEntity = memberCommandRepository.save(memberEntity)
+        return MemberEntityDto.toDto(result)
     }
 
     fun generateToken(member: MemberEntityDto): VerifyMemberResponse {
+        return VerifyMemberResponse("access", "refresh")
         TODO("generate access token, refresh token")
     }
 }

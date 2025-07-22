@@ -25,26 +25,34 @@ class MemberCommandService(
 
         // Redis set
         val member: MemberEntityDto =
-            MemberEntityDto(id = uuid, email = request.email, password = encodedPassword, nickname = request.nickname, introduce = request.introduce)
+            MemberEntityDto(
+                id = uuid,
+                email = request.email,
+                password = encodedPassword,
+                nickname = request.nickname,
+                introduce = request.introduce,
+            )
         memberCommandHandler.setWaitVerifyMember(member, verifyCode, 3, TimeUnit.MINUTES)
 
         // 이메일 발송
-        memberCommandHandler.sendEmailWithVerifyCode(member)
+        // TODO memberCommandHandler.sendEmailWithVerifyCode(member)
 
-        return CreateMemberResponse()
+        return CreateMemberResponse(uuid, Integer.valueOf(verifyCode))
     }
 
     @Transactional
     fun verify(payload: VerifyMemberRequest): VerifyMemberResponse {
         // Redis get
         val member: MemberEntityDto =
-            requireNotNull(memberCommandHandler.getWaitVerifyMember(payload.uuid, payload.email, payload.verifyCode)) { throw IllegalArgumentException() }
+            requireNotNull(memberCommandHandler.getWaitVerifyMember(payload.uuid, payload.email, payload.verifyCode)) {
+                throw IllegalArgumentException()
+            }
 
         // Save Member
-        memberCommandHandler.saveVerifiedMember(member)
+        val result: MemberEntityDto = memberCommandHandler.saveVerifiedMember(member)
 
         // 토큰 발행
-        val response: VerifyMemberResponse = memberCommandHandler.generateToken(member)
+        val response: VerifyMemberResponse = memberCommandHandler.generateToken(result)
 
         return response
     }
