@@ -36,7 +36,7 @@ class MemberCommandService(
         memberCommandHandler.setWaitVerifyMember(member, verifyCode, 3, TimeUnit.MINUTES)
 
         // 이메일 발송
-        val result:SimpleMailMessage = memberCommandHandler.sendEmailWithVerifyCode(request.email, verifyCode, 3, TimeUnit.MINUTES)
+        val result: SimpleMailMessage = memberCommandHandler.sendEmailWithVerifyCode(request.email, verifyCode, 3, TimeUnit.MINUTES)
 
         return CreateMemberResponse(uuid, Integer.valueOf(verifyCode))
     }

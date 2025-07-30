@@ -1,7 +1,6 @@
 package io.choimory.member.external.api.member.v1.command.service
 
 import io.choimory.member.external.api.common.util.TimeUnitUtil
-import io.choimory.member.external.api.mail.v1.domain.dto.MailDto
 import io.choimory.member.external.api.mail.v1.handler.MailHandler
 import io.choimory.member.external.api.member.v1.command.domain.dto.MemberEntityDto
 import io.choimory.member.external.api.member.v1.command.domain.entity.MemberEntity
@@ -37,8 +36,19 @@ class MemberCommandHandler(
         redisTemplate.opsForValue().set("${member.id}:$verifyCode", member, ttl, timeUnit)
     }
 
-    fun sendEmailWithVerifyCode(email: String, verifyCode: String, minute:Int, unit:TimeUnit):SimpleMailMessage {
-        val result: SimpleMailMessage = mailHandler.sendMail(listOf(email), null, "[choimory-io] 회원가입 인증코드 안내입니다", "[${verifyCode}]를 ${minute}${TimeUnitUtil.toKorean(unit)}안에 입력해주세요")
+    fun sendEmailWithVerifyCode(
+        email: String,
+        verifyCode: String,
+        minute: Int,
+        unit: TimeUnit,
+    ): SimpleMailMessage {
+        val result: SimpleMailMessage =
+            mailHandler.sendMail(
+                listOf(email),
+                null,
+                "[choimory-io] 회원가입 인증코드 안내입니다",
+                "[$verifyCode]를 ${minute}${TimeUnitUtil.toKorean(unit)}안에 입력해주세요",
+            )
         return result
     }
 

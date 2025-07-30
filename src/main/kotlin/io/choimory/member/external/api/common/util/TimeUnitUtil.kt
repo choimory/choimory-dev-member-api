@@ -4,7 +4,7 @@ import java.util.concurrent.TimeUnit
 
 class TimeUnitUtil {
     companion object {
-        fun toKorean(unit:TimeUnit): String =
+        fun toKorean(unit: TimeUnit): String =
             when (unit) {
                 TimeUnit.SECONDS -> "초"
                 TimeUnit.MINUTES -> "분"

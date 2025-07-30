@@ -14,7 +14,7 @@ data class MemberEntityDto(
             return MemberEntity(id = dto.id, email = dto.email, nickname = dto.nickname, password = dto.password, introduce = dto.introduce)
         }
 
-        fun toDto(entity: MemberEntity): MemberEntityDto  {
+        fun toDto(entity: MemberEntity): MemberEntityDto {
             return MemberEntityDto(
                 id = entity.id,
                 email = entity.email,
