@@ -6,6 +6,7 @@ import io.choimory.member.external.api.member.v1.command.domain.request.CreateMe
 import io.choimory.member.external.api.member.v1.command.domain.request.VerifyMemberRequest
 import io.choimory.member.external.api.member.v1.command.domain.response.CreateMemberResponse
 import io.choimory.member.external.api.member.v1.command.domain.response.VerifyMemberResponse
+import org.springframework.mail.SimpleMailMessage
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.TimeUnit
@@ -35,7 +36,7 @@ class MemberCommandService(
         memberCommandHandler.setWaitVerifyMember(member, verifyCode, 3, TimeUnit.MINUTES)
 
         // 이메일 발송
-        // TODO memberCommandHandler.sendEmailWithVerifyCode(member)
+        val result:SimpleMailMessage = memberCommandHandler.sendEmailWithVerifyCode(request.email, verifyCode, 3, TimeUnit.MINUTES)
 
         return CreateMemberResponse(uuid, Integer.valueOf(verifyCode))
     }
