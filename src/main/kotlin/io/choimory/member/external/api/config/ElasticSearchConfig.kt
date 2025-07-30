@@ -11,7 +11,7 @@ import org.springframework.context.annotation.Configuration
 
 @Configuration
 class ElasticSearchConfig(
-    @Value("\${es-url}")
+    @Value("\${es-host}")
     val url: String,
     @Value("\${es-port}")
     val port: Int,
