@@ -11,19 +11,11 @@ import org.springframework.security.crypto.password.PasswordEncoder
 @Configuration
 class AppConfig {
     @Bean
-    fun passwordEncoder(): PasswordEncoder {
-        return BCryptPasswordEncoder()
-    }
+    fun passwordEncoder(): PasswordEncoder = BCryptPasswordEncoder()
 
     @Bean
-    fun objectMapper(): ObjectMapper {
-        return ObjectMapper()
-    }
+    fun objectMapper(): ObjectMapper = ObjectMapper()
 
     @Bean
-    fun javaMailSender():JavaMailSender{
-        val javaMailSender:JavaMailSender = JavaMailSenderImpl()
-
-        return javaMailSender
-    }
+    fun javaMailSender(): JavaMailSender = JavaMailSenderImpl()
 }
