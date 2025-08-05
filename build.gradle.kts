@@ -7,7 +7,7 @@ plugins {
     id("org.jlleitschuh.gradle.ktlint") version "12.1.0"
 }
 
-group = "io.choimory"
+group = "dev.choimory"
 version = "0.0.1-SNAPSHOT"
 
 java {
@@ -37,8 +37,10 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-data-elasticsearch")
     implementation("co.elastic.clients:elasticsearch-java:8.12.2")
     implementation("org.springframework.boot:spring-boot-starter-data-redis")
+    implementation("io.github.oshai:kotlin-logging-jvm:5.1.1")
+    implementation("com.fasterxml.jackson.core:jackson-databind:2.17.0")
+    implementation("com.github.f4b6a3:uuid-creator:5.3.2")
     compileOnly("org.projectlombok:lombok")
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose")
     runtimeOnly("org.postgresql:postgresql")
     annotationProcessor("org.springframework.boot:spring-boot-configuration-processor")
     annotationProcessor("org.projectlombok:lombok")
