@@ -2,7 +2,7 @@
 
 https://github.com/choimory/choimory-io-architect
 
-# choimory.io.member.external.api
+# choimory.member.api
 
 - CQRS
     - Command: Postgres
