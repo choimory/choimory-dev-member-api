@@ -1,4 +1,4 @@
-package io.choimory.member.external.api
+package dev.choimory.member.api
 
 import org.springframework.boot.test.context.TestConfiguration
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection

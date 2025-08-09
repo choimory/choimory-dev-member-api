@@ -6,8 +6,8 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing
 
 @SpringBootApplication
 @EnableJpaAuditing
-class ChoimoryMemberApiApplication
+class ChoimoryDevMemberApiApplication
 
 fun main(args: Array<String>) {
-    runApplication<ChoimoryMemberApiApplication>(*args)
+    runApplication<ChoimoryDevMemberApiApplication>(*args)
 }

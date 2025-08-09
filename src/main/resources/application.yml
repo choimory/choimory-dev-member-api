@@ -3,7 +3,7 @@ server:
 
 spring:
     application:
-        name: choimory-member-api
+        name: choimory-dev-member-api
 
     profiles:
         include: datasource

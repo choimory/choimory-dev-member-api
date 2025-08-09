@@ -3,16 +3,15 @@ package dev.choimory.member.api.mail.v1.handler
 import dev.choimory.member.api.common.exception.CommonException
 import dev.choimory.member.api.mail.v1.domain.dto.MailDto
 import org.springframework.http.HttpStatus
-import org.springframework.mail.MailException
 import org.springframework.mail.SimpleMailMessage
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.stereotype.Component
 
 @Component
 class MailHandler(
-    private val javaMailSender: JavaMailSender,
+    //private val javaMailSender: JavaMailSender,
 ) {
-    fun sendMail(
+    /*fun sendMail(
         to: List<String>,
         from: String?,
         subject: String,
@@ -27,5 +26,5 @@ class MailHandler(
         }
 
         return message
-    }
+    }*/
 }

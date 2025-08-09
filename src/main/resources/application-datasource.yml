@@ -29,14 +29,14 @@ spring:
     redis:
       time-to-live: 6000000 #(ms) # 만료없음: -1
 
-  mail:
-    host: ${email-host} #smtp.gmail.com #smtp.naver.com
-    port: ${email-port} #587
-    username: ${email-user} #your.email@gmail.com #yourid@naver.com
-    password: ${email-password} #your-app-password #your-password #구글은 계정 비밀번호 말고 앱 비밀번호를 발급받아 사용해야함
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+  #mail:
+  #  host: ${email-host} #smtp.gmail.com #smtp.naver.com
+  #  port: ${email-port} #587
+  #  username: ${email-user} #your.email@gmail.com #yourid@naver.com
+  #  password: ${email-password} #your-app-password #your-password #구글은 계정 비밀번호 말고 앱 비밀번호를 발급받아 사용해야함
+  #  properties:
+  #    mail:
+  #      smtp:
+  #        auth: true
+  #        starttls:
+  #          enable: true
