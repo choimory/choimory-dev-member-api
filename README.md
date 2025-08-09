@@ -1,6 +1,6 @@
 # choimory-dev architect
 
-https://github.com/choimory/choimory-io-architect
+https://github.com/choimory/choimory-architecture/tree/main/choimory-dev
 
 # choimory-dev-member-api
 
