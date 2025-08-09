@@ -1,8 +1,8 @@
-# choimory.io architect
+# choimory-dev architect
 
 https://github.com/choimory/choimory-io-architect
 
-# choimory.member.api
+# choimory-dev-member-api
 
 - CQRS
     - Command: Postgres
