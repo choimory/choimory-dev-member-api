@@ -1,13 +1,9 @@
-# choimory.io architect
-
-https://github.com/choimory/choimory-io-architect
-
-# choimory.member.api
+# choimory-dev-member-api
 
 - CQRS
-    - Command: Postgres
-    - Query: ElasticSearch
-    - Cache: Redis
+  - Command: Postgres
+  - Query: ElasticSearch
+  - Cache: Redis
 - Language
   - Kotlin
 - Framework, Library
