@@ -36,7 +36,7 @@ class MemberCommandHandler(
         redisTemplate.opsForValue().set("${member.id}:$verifyCode", member, ttl, timeUnit)
     }
 
-    fun sendEmailWithVerifyCode(
+    /*fun sendEmailWithVerifyCode(
         email: String,
         verifyCode: String,
         minute: Int,
@@ -50,7 +50,7 @@ class MemberCommandHandler(
                 "[$verifyCode]를 ${minute}${TimeUnitUtil.toKorean(unit)}안에 입력해주세요",
             )
         return result
-    }
+    }*/
 
     fun getWaitVerifyMember(
         uuid: String,

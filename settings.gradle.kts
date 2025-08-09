@@ -4,4 +4,4 @@ pluginManagement {
         gradlePluginPortal()
     }
 }
-rootProject.name = "choimory-member-api"
+rootProject.name = "choimory-dev-member-api"

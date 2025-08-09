@@ -9,9 +9,9 @@ import org.springframework.stereotype.Component
 
 @Component
 class MailHandler(
-    private val javaMailSender: JavaMailSender,
+    //private val javaMailSender: JavaMailSender,
 ) {
-    fun sendMail(
+    /*fun sendMail(
         to: List<String>,
         from: String?,
         subject: String,
@@ -26,5 +26,5 @@ class MailHandler(
         }
 
         return message
-    }
+    }*/
 }
