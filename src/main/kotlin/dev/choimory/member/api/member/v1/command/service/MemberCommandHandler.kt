@@ -1,13 +1,11 @@
 package dev.choimory.member.api.member.v1.command.service
 
-import dev.choimory.member.api.common.util.TimeUnitUtil
 import dev.choimory.member.api.mail.v1.handler.MailHandler
 import dev.choimory.member.api.member.v1.command.domain.dto.MemberEntityDto
 import dev.choimory.member.api.member.v1.command.domain.entity.MemberEntity
 import dev.choimory.member.api.member.v1.command.domain.response.VerifyMemberResponse
 import dev.choimory.member.api.member.v1.command.repository.MemberCommandRepository
 import org.springframework.data.redis.core.RedisTemplate
-import org.springframework.mail.SimpleMailMessage
 import org.springframework.security.crypto.password.PasswordEncoder
 import org.springframework.stereotype.Component
 import java.util.concurrent.TimeUnit
