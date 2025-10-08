@@ -26,6 +26,7 @@ class LoginFailureHandler(val objectMapper: ObjectMapper) : AuthenticationFailur
             response.writer,
             CommonResponse<Nothing>(
                 HttpStatus.UNAUTHORIZED.value(),
+                HttpStatus.UNAUTHORIZED.name,
                 exception?.message ?: HttpStatus.UNAUTHORIZED.reasonPhrase,
             ),
         )

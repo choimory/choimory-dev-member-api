@@ -38,6 +38,7 @@ class LoginSuccessHandler(
             response.writer,
             CommonResponse(
                 HttpStatus.OK.value(),
+                HttpStatus.OK.name,
                 HttpStatus.OK.reasonPhrase,
                 LoginResponse("access-token", "refresh-token"),
             ),
