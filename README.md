@@ -14,7 +14,7 @@
   - Querydsl
   - Elasticsearch Java API Client
   - Spring Validation
-  - Java Mail Sender
+  - ~~Java Mail Sender~~
   - Swagger
   - Ktlint
   - docker-compose

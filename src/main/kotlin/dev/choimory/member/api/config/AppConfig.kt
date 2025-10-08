@@ -13,7 +13,4 @@ class AppConfig {
 
     @Bean
     fun objectMapper(): ObjectMapper = ObjectMapper()
-
-    /*@Bean
-    fun javaMailSender(): JavaMailSender = JavaMailSenderImpl()*/
 }
