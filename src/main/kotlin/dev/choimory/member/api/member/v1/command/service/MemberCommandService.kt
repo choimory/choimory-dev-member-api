@@ -1,11 +1,13 @@
 package dev.choimory.member.api.member.v1.command.service
 
 import com.github.f4b6a3.uuid.UuidCreator
+import dev.choimory.member.api.common.domain.response.CommonResponse
 import dev.choimory.member.api.member.v1.command.domain.dto.MemberEntityDto
 import dev.choimory.member.api.member.v1.command.domain.request.CreateMemberRequest
 import dev.choimory.member.api.member.v1.command.domain.request.VerifyMemberRequest
 import dev.choimory.member.api.member.v1.command.domain.response.CreateMemberResponse
 import dev.choimory.member.api.member.v1.command.domain.response.VerifyMemberResponse
+import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.util.concurrent.TimeUnit
@@ -15,7 +17,7 @@ import java.util.concurrent.TimeUnit
 class MemberCommandService(
     private val memberCommandHandler: MemberCommandHandler,
 ) {
-    fun signup(request: CreateMemberRequest): CreateMemberResponse {
+    fun signup(request: CreateMemberRequest): CommonResponse<CreateMemberResponse> {
         // 비밀번호 암호화
         val encodedPassword: String = memberCommandHandler.encodePassword(request.password)
 
@@ -37,11 +39,11 @@ class MemberCommandService(
         // 이메일 발송
         // val result: SimpleMailMessage = memberCommandHandler.sendEmailWithVerifyCode(request.email, verifyCode, 3, TimeUnit.MINUTES)
 
-        return CreateMemberResponse(uuid, Integer.valueOf(verifyCode))
+        return CommonResponse(HttpStatus.OK.value(), HttpStatus.OK.name, "SUCCESS", CreateMemberResponse(uuid, Integer.valueOf(verifyCode)))
     }
 
     @Transactional
-    fun verify(payload: VerifyMemberRequest): VerifyMemberResponse {
+    fun verify(payload: VerifyMemberRequest): CommonResponse<VerifyMemberResponse> {
         // Redis get
         val member: MemberEntityDto =
             requireNotNull(memberCommandHandler.getWaitVerifyMember(payload.uuid, payload.email, payload.verifyCode)) {
@@ -54,6 +56,6 @@ class MemberCommandService(
         // 토큰 발행
         val response: VerifyMemberResponse = memberCommandHandler.generateToken(result)
 
-        return response
+        return CommonResponse(HttpStatus.CREATED.value(), HttpStatus.CREATED.name, "SUCCESS", response)
     }
 }

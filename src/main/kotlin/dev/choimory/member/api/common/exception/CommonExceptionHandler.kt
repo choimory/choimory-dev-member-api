@@ -22,6 +22,7 @@ class CommonExceptionHandler {
         log.error { "${e.message}" }
         return CommonResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            HttpStatus.INTERNAL_SERVER_ERROR.name,
             HttpStatus.INTERNAL_SERVER_ERROR.reasonPhrase,
             e.message,
         )
@@ -33,6 +34,7 @@ class CommonExceptionHandler {
         log.error { "${e.message}" }
         return CommonResponse(
             HttpStatus.INTERNAL_SERVER_ERROR.value(),
+            HttpStatus.INTERNAL_SERVER_ERROR.name,
             HttpStatus.INTERNAL_SERVER_ERROR.reasonPhrase,
             e.message,
         )
@@ -43,6 +45,7 @@ class CommonExceptionHandler {
         return ResponseEntity(
             CommonResponse(
                 e.code ?: e.status.value(),
+                e.codeName ?: e.status.name,
                 e.msg ?: e.status.reasonPhrase,
             ),
             e.status,
@@ -55,6 +58,7 @@ class CommonExceptionHandler {
     fun methodArgumentNotValidException(e: MethodArgumentNotValidException): CommonResponse<List<CommonValidateResult>> {
         return CommonResponse(
             HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST.name,
             HttpStatus.BAD_REQUEST.reasonPhrase,
             e.fieldErrors.stream()
                 .map { f ->
@@ -73,6 +77,7 @@ class CommonExceptionHandler {
     fun constraintViolationException(e: ConstraintViolationException): CommonResponse<List<CommonValidateResult>> {
         return CommonResponse(
             HttpStatus.BAD_REQUEST.value(),
+            HttpStatus.BAD_REQUEST.name,
             HttpStatus.BAD_REQUEST.reasonPhrase,
             e.constraintViolations.stream()
                 .map { v ->
@@ -91,6 +96,7 @@ class CommonExceptionHandler {
     fun authenticateException(e: Exception): CommonResponse<String> {
         return CommonResponse(
             HttpStatus.UNAUTHORIZED.value(),
+            HttpStatus.UNAUTHORIZED.name,
             HttpStatus.UNAUTHORIZED.reasonPhrase,
             e.message,
         )

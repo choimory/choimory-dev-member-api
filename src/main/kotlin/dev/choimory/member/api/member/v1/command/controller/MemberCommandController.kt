@@ -1,5 +1,6 @@
 package dev.choimory.member.api.member.v1.command.controller
 
+import dev.choimory.member.api.common.domain.response.CommonResponse
 import dev.choimory.member.api.member.v1.command.domain.request.CreateMemberRequest
 import dev.choimory.member.api.member.v1.command.domain.request.VerifyMemberRequest
 import dev.choimory.member.api.member.v1.command.domain.response.CreateMemberResponse
@@ -23,7 +24,7 @@ class MemberCommandController(
     @ResponseStatus(HttpStatus.OK)
     fun signup(
         @Valid payload: CreateMemberRequest,
-    ): CreateMemberResponse {
+    ): CommonResponse<CreateMemberResponse> {
         return memberCommandService.signup(payload)
     }
 
@@ -31,7 +32,7 @@ class MemberCommandController(
     @ResponseStatus(HttpStatus.CREATED)
     fun verify(
         @Valid payload: VerifyMemberRequest,
-    ): VerifyMemberResponse {
+    ): CommonResponse<VerifyMemberResponse> {
         return memberCommandService.verify(payload)
     }
 }
