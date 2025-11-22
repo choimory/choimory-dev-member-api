@@ -16,4 +16,5 @@ spring:
 logging:
   level:
     root: info
+    dev.choimory: debug
     org:hibernate.SQL: info
