@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RestController
 class MemberCommandController(
     private val memberCommandService: MemberCommandService,
 ) {
-    @PostMapping("/signup")
+    @PostMapping("/sign-up")
     @ResponseStatus(HttpStatus.OK)
-    fun signup(
+    fun signUp(
         @Valid payload: CreateMemberRequest,
     ): CommonResponse<CreateMemberResponse> {
-        return memberCommandService.signup(payload)
+        return memberCommandService.signUp(payload)
     }
 
     @PostMapping("/verify")

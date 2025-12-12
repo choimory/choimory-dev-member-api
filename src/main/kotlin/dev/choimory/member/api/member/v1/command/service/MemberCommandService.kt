@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit
 class MemberCommandService(
     private val memberCommandHandler: MemberCommandHandler,
 ) {
-    fun signup(request: CreateMemberRequest): CommonResponse<CreateMemberResponse> {
+    fun signUp(request: CreateMemberRequest): CommonResponse<CreateMemberResponse> {
         // 비밀번호 암호화
         val encodedPassword: String = memberCommandHandler.encodePassword(request.password)
 
@@ -36,8 +36,7 @@ class MemberCommandService(
             )
         memberCommandHandler.setWaitVerifyMember(member, verifyCode, 3, TimeUnit.MINUTES)
 
-        // 이메일 발송
-        // val result: SimpleMailMessage = memberCommandHandler.sendEmailWithVerifyCode(request.email, verifyCode, 3, TimeUnit.MINUTES)
+        // TODO 이메일 발송 Kafka
 
         return CommonResponse(HttpStatus.OK.value(), HttpStatus.OK.name, "SUCCESS", CreateMemberResponse(uuid, Integer.valueOf(verifyCode)))
     }

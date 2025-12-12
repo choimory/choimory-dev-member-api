@@ -1,5 +1,5 @@
 -- auto-generated definition
-create table if not exists choimory_io_member.member
+create table if not exists choimory_dev_member.member
 (
     id          varchar(255) not null
     constraint member_pk
@@ -14,8 +14,8 @@ create table if not exists choimory_io_member.member
     );
 
 create unique index if not exists  member_email_uindex
-    on choimory_io_member.member (email);
+    on choimory_dev_member.member (email);
 
 create unique index if not exists  member_nickname_uindex
-    on choimory_io_member.member (nickname);
+    on choimory_dev_member.member (nickname);
 
