@@ -28,12 +28,12 @@
 
 .agents/CALENDAR.md
 .agents/year/month/day/task-agenda/plan1.md
-                               plan2.md
-                               task1.md
-                               task2.md
-                               task3.md
-                               done1.md
-                               done2.md
+                                   plan2.md
+                                   task1.md
+                                   task2.md
+                                   task3.md
+                                   done1.md
+                                   done2.md
 
 ---
 
@@ -156,8 +156,9 @@
 - 작업 계획을 시작할땐 CALENDAR.md에 PLAN:[Agenda][(Directory-name)]을 추가한다.
 - 실제 작업을 시작할땐 CALENDAR.md에서 상태를 TASK로 바꿔서 TASK:[Agenda][(Directory-name)]으로 변경한다.
 - 작업을 마무리할땐 CALENDAR.md에서 상태를 DONE으로 바꿔서 DONE:[Agenda][(Directory-name)]으로 변경한다.
-- 작업 주제 알려주면서 “(Agenda) 작업할거야 plan1 만들어줘” 하면, 내용 없이 목차와 개요만 존재하는 plan1 빈 문서를 만들어주고 CALENDAR.md에 PLAN:[Agenda][(Directory-name)]으로 작업을 추가한다.
-- 작업 마무리하자 하면, 작업 전체 요약을 done1~.md에 적고, CALENDAR.md에 해당 작업을 DONE:[Agenda][(Directory-name)]로 변경하고, README.md에 변경사항을 반영하는 것으로 마무리한다.
+- 작업 주제 알려주면서 “(Agenda) 작업할거야” 하면, 내용 없이 목차와 개요만 존재하는 plan1 빈 문서를 만들어주고 CALENDAR.md에 PLAN:[Agenda][(Directory-name)]으로 작업을 추가한다.
+- plan 문서를 작성하면서 분석하던 것을 마무리하고 실제 작업을 진행해달라 하면, CALENDAR.md에 해당 작업을 TASK:[Agenda][(Directory-name)]로 변경하고 작업을 시작함.
+- 작업이 모두 종료 되어서 “작업 마무리하자” 하면, 작업 전체 요약을 done1~.md에 적고, CALENDAR.md에 해당 작업을 DONE:[Agenda][(Directory-name)]로 변경하고, README.md에 변경사항을 반영하는 것으로 마무리한다.
 - 자세한 사항은 하단 CALENDAR.md 양식란 참고.
 
 ## CALENDAR.md 양식
