@@ -4,6 +4,7 @@
 - [코드 컨벤션 검사](#코드-컨벤션-검사)
 - [Builder 활용 부족](#builder-활용-부족)
 - [코드 컨벤션 수정 계획](#코드-컨벤션-수정-계획)
+- [Entity, DTO, Jackson 설계 질답](#entity-dto-jackson-설계-질답)
 - [수정 우선순위](#수정-우선순위)
 
 ---
@@ -356,6 +357,267 @@ return CommonResponse.ok(response);
 우선 이번 컨벤션 정리는 컴파일과 기존 context test 유지까지를 완료 기준으로 잡는다.
 
 함수 단위 테스트와 API 통합 테스트는 다음 계획으로 분리한다.
+
+---
+
+# Entity, DTO, Jackson 설계 질답
+
+> 엔티티에 @builder(toBuilder=true) 이거 안해도 되나?
+
+## 답변
+
+Entity에는 `@Builder(toBuilder = true)`를 붙이지 않는 쪽이 더 적절하다.
+
+현재 rules 기준으로 Entity의 핵심은 다음과 같다.
+
+- Entity에는 DTO 변환 메소드를 작성하지 않는다.
+- Entity 수정은 Entity 내부 함수로 처리한다.
+- JPA 기본 생성자는 `@NoArgsConstructor(access = AccessLevel.PROTECTED)`를 둔다.
+- Entity 생성은 정적 팩토리 메소드로 제공한다.
+
+따라서 Entity는 다음 형태가 자연스럽다.
+
+```java
+@Getter
+@Entity
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class MemberEntity {
+
+    private MemberEntity(...) {
+        ...
+    }
+
+    public static MemberEntity create(...) {
+        return new MemberEntity(...);
+    }
+}
+```
+
+Entity에 builder를 열면 다음 문제가 생길 수 있다.
+
+- Entity 생성 경로가 여러 개로 퍼진다.
+- 필수값 검증이나 생성 규칙을 우회하기 쉬워진다.
+- `toBuilder()`로 기존 Entity를 복사 수정하는 패턴이 생기면 JPA dirty checking 기반 수정 메소드 규칙과 충돌하기 쉽다.
+- 도메인 변경을 `entity.update(...)` 같은 명시적 메소드로 제한하기 어려워진다.
+
+따라서 DTO, Request, Response에는 `@Builder(toBuilder = true)`를 사용하고, Entity는 생성자를 닫고 `create()`로 생성 경로를 통제하는 쪽이 더 안전하다.
+
+---
+
+> 엔티티 생성을 닫고 create 함수를 열겠다는건가?
+
+## 답변
+
+맞다.
+
+Entity는 아무 곳에서나 생성자나 builder로 조립하지 않고, 정해진 생성 함수로만 만들도록 제한하는 방향이다.
+
+구조는 다음과 같다.
+
+```java
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@Entity
+public class MemberEntity {
+
+    @Id
+    private String id;
+
+    private String email;
+    private String nickname;
+    private String password;
+    private String introduce;
+
+    private MemberEntity(
+            String id,
+            String email,
+            String nickname,
+            String password,
+            String introduce
+    ) {
+        this.id = id;
+        this.email = email;
+        this.nickname = nickname;
+        this.password = password;
+        this.introduce = introduce;
+    }
+
+    public static MemberEntity create(
+            String id,
+            String email,
+            String nickname,
+            String password,
+            String introduce
+    ) {
+        return new MemberEntity(
+                id,
+                email,
+                nickname,
+                password,
+                introduce
+        );
+    }
+}
+```
+
+생성 경로는 다음 두 개만 남긴다.
+
+- JPA용 protected no-args constructor
+- 애플리케이션 코드용 `MemberEntity.create(...)`
+
+외부 코드에서는 `new MemberEntity(...)`를 사용할 수 없고, `MemberEntity.builder()`도 제공하지 않는다.
+
+이렇게 하면 Entity 생성 규칙을 `create()` 안에 모을 수 있다.
+
+예를 들어 나중에 필수값 검증이 필요하면 다음처럼 한 곳에 추가할 수 있다.
+
+```java
+public static MemberEntity create(...) {
+    if (email == null || email.isBlank()) {
+        throw new IllegalArgumentException("이메일은 필수입니다.");
+    }
+
+    return new MemberEntity(...);
+}
+```
+
+Builder는 DTO, Request, Response처럼 값을 담는 객체에는 잘 맞지만, Entity에 붙이면 도메인 생성 규칙이 느슨해질 수 있다.
+
+---
+
+> 그러네 dto에는 builder to builder해놨네
+
+## 답변
+
+DTO에는 `@Builder(toBuilder = true)`가 잘 맞다.
+
+DTO는 Entity처럼 생명주기나 변경 규칙을 강하게 지킬 필요가 적고, 레이어 사이로 데이터를 전달하는 객체에 가깝다.
+
+예를 들어 DTO는 다음처럼 Entity에서 변환해 만들 수 있다.
+
+```java
+MemberEntityDto dto = MemberEntityDto.from(entity);
+```
+
+일부 필드만 바꾼 복사본이 필요하면 `toBuilder()`를 사용할 수 있다.
+
+```java
+MemberEntityDto updated = dto.toBuilder()
+        .nickname("newNickname")
+        .build();
+```
+
+이 방식은 원본 DTO를 변경하지 않고 새 객체를 만들기 때문에 불변 객체 스타일과 잘 맞는다.
+
+정리하면 다음과 같다.
+
+### Entity
+
+- `@Builder(toBuilder = true)`를 사용하지 않는 쪽이 좋다.
+- 생성자를 닫고 `create()`로 생성 경로를 통제한다.
+- 수정은 `update...()` 같은 Entity 내부 메소드로 제한한다.
+
+### DTO, Request, Response
+
+- `@Builder(toBuilder = true)`를 사용하는 쪽이 좋다.
+- 불변 필드와 궁합이 좋다.
+- 정적 팩토리 내부에서 builder를 사용한다.
+- 필요하면 `toBuilder()`로 일부 필드만 바꾼 복사본을 생성한다.
+
+---
+
+> 그럼 final class랑 @jsoncreator, @jsonproperty는 왜쓴거야
+
+## 답변
+
+`final class`, `@JsonCreator`, `@JsonProperty`는 모두 불변 객체를 Jackson이 잘 다루게 하기 위한 선택이다.
+
+## final class
+
+`final class`는 상속을 막는 용도다.
+
+DTO, Request, Response는 보통 확장해서 다형성으로 쓰는 객체가 아니라, 정해진 형태로 값을 담는 객체에 가깝다.
+
+```java
+public final class LoginRequest
+```
+
+의미는 다음과 같다.
+
+- 이 객체는 상속해서 바꿔 쓰지 않는다.
+- 값 전달용 객체로 고정된 형태다.
+- 불변 객체 스타일과 잘 맞는다.
+
+필드도 `private final`로 선언해 객체 생성 후 값이 바뀌지 않게 한다.
+
+```java
+private final String email;
+private final String password;
+```
+
+## JsonCreator, JsonProperty
+
+문제는 Jackson 역직렬화다.
+
+JSON 요청이 들어오면 Jackson이 객체를 만들어야 하는데, 불변 객체에는 setter가 없고 기본 생성자도 없다.
+
+예를 들어 다음 형태만 있으면 Jackson이 JSON 값을 어떤 생성자 파라미터에 넣어야 하는지 확실하지 않을 수 있다.
+
+```java
+@Getter
+@Builder
+public final class LoginRequest {
+    private final String email;
+    private final String password;
+}
+```
+
+그래서 생성자에 다음처럼 표시한다.
+
+```java
+@JsonCreator
+public LoginRequest(
+        @JsonProperty("email") String email,
+        @JsonProperty("password") String password
+) {
+    this.email = email;
+    this.password = password;
+}
+```
+
+각 어노테이션의 의미는 다음과 같다.
+
+- `@JsonCreator`
+  - Jackson이 JSON으로 이 객체를 만들 때 이 생성자를 사용하라는 의미다.
+- `@JsonProperty("email")`
+  - JSON의 `email` 값을 이 파라미터에 넣으라는 의미다.
+- `@JsonProperty("password")`
+  - JSON의 `password` 값을 이 파라미터에 넣으라는 의미다.
+
+즉 다음 조합은 불변 요청/응답 객체를 JSON 직렬화/역직렬화 가능하게 만드는 패턴이다.
+
+```java
+final class
+private final fields
+@JsonCreator + @JsonProperty constructor
+```
+
+## 대안
+
+Lombok/Jackson 조합에서는 다음 대안도 있다.
+
+```java
+@Getter
+@Builder(toBuilder = true)
+@Jacksonized
+public final class LoginRequest {
+    private final String email;
+    private final String password;
+}
+```
+
+`@Jacksonized`를 사용하면 builder 기반 역직렬화를 할 수 있어 생성자에 `@JsonCreator`, `@JsonProperty`를 덜 써도 된다.
+
+현재 방식은 조금 장황하지만 Jackson 동작이 명시적으로 보이는 장점이 있다.
 
 ---
 
