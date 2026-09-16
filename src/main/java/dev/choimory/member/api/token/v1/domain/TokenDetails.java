@@ -32,6 +32,18 @@ public final class TokenDetails {
      * @return 토큰 상세 객체
      */
     public static TokenDetails of(MemberDocumentDto member) {
-        return new TokenDetails(member.getEmail());
+        return from(member);
+    }
+
+    /**
+     * 회원 Document DTO에서 토큰 상세 객체를 생성합니다.
+     *
+     * @param member 회원 Document DTO
+     * @return 토큰 상세 객체
+     */
+    public static TokenDetails from(MemberDocumentDto member) {
+        return TokenDetails.builder()
+                .email(member.getEmail())
+                .build();
     }
 }

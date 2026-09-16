@@ -48,8 +48,8 @@ public class MemberCommandService {
         memberCommandHandler.setWaitVerifyMember(member, verifyCode, 3, TimeUnit.MINUTES);
 
         // TODO 이메일 발송 Kafka
-        CreateMemberResponse response = new CreateMemberResponse(uuid, Integer.parseInt(verifyCode));
-        return new CommonResponse<>(HttpStatus.OK.value(), HttpStatus.OK.name(), "SUCCESS", response);
+        CreateMemberResponse response = CreateMemberResponse.of(uuid, Integer.parseInt(verifyCode));
+        return CommonResponse.of(HttpStatus.OK, "SUCCESS", response);
     }
 
     /**
@@ -75,6 +75,6 @@ public class MemberCommandService {
 
         // 인증 완료 후 토큰 응답을 생성한다.
         VerifyMemberResponse response = memberCommandHandler.generateToken(result);
-        return new CommonResponse<>(HttpStatus.CREATED.value(), HttpStatus.CREATED.name(), "SUCCESS", response);
+        return CommonResponse.of(HttpStatus.CREATED, "SUCCESS", response);
     }
 }

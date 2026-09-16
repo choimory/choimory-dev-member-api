@@ -145,7 +145,7 @@
 
 - `application.yml`은 `datasource` profile을 include하므로 실행 시 DB, Redis, Elasticsearch 환경변수가 필요하다.
 - 외부 연결 환경변수가 없으면 애플리케이션 부팅은 실패할 수 있다.
-- `MemberDocumentDto.from()`은 기존 Kotlin TODO였지만 Java 이관 과정에서 로그인 검증을 위해 이메일 매핑을 구현했다.
+- `MemberDocumentDto.from()`은 기존 Kotlin TODO였지만 Java 이관 과정에서 Document와 1:1 필드 매핑으로 구현했다.
 - 토큰 생성과 Redis 토큰 등록은 기존 Kotlin TODO 상태를 유지해 placeholder 값을 응답한다.
 - `LoginRequest`는 기존 Kotlin 파일의 package 불일치를 정리해 `dev.choimory.member.api.login.v1.domain.request`로 이관했다.
 - Elasticsearch Java API Client는 Spring Boot/Spring Data가 관리하는 버전을 사용한다.

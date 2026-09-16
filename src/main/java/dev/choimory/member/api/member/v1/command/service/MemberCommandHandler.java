@@ -97,6 +97,6 @@ public class MemberCommandHandler {
      * @return 토큰 응답
      */
     public VerifyMemberResponse generateToken(MemberEntityDto member) {
-        return new VerifyMemberResponse("access", "refresh");
+        return VerifyMemberResponse.of("access", "refresh");
     }
 }

@@ -30,9 +30,8 @@ public class CommonExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public CommonResponse<String> exception(Exception e) {
         log.error("Unhandled exception", e);
-        return new CommonResponse<>(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.name(),
+        return CommonResponse.error(
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
                 e.getMessage()
         );
@@ -48,9 +47,8 @@ public class CommonExceptionHandler {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public CommonResponse<String> runtimeException(RuntimeException e) {
         log.error("Runtime exception", e);
-        return new CommonResponse<>(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.name(),
+        return CommonResponse.error(
+                HttpStatus.INTERNAL_SERVER_ERROR,
                 HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
                 e.getMessage()
         );
@@ -64,11 +62,12 @@ public class CommonExceptionHandler {
      */
     @ExceptionHandler(CommonException.class)
     public ResponseEntity<CommonResponse<String>> commonException(CommonException e) {
-        CommonResponse<String> response = new CommonResponse<>(
-                e.getCode() != null ? e.getCode() : e.getStatus().value(),
-                e.getCodeName() != null ? e.getCodeName() : e.getStatus().name(),
-                e.getMsg() != null ? e.getMsg() : e.getStatus().getReasonPhrase()
-        );
+        CommonResponse<String> response = CommonResponse.<String>builder()
+                .code(e.getCode() != null ? e.getCode() : e.getStatus().value())
+                .name(e.getCodeName() != null ? e.getCodeName() : e.getStatus().name())
+                .message(e.getMsg() != null ? e.getMsg() : e.getStatus().getReasonPhrase())
+                .data(null)
+                .build();
         return new ResponseEntity<>(response, e.getStatus());
     }
 
@@ -89,9 +88,8 @@ public class CommonExceptionHandler {
                         .build())
                 .toList();
 
-        return new CommonResponse<>(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.name(),
+        return CommonResponse.error(
+                HttpStatus.BAD_REQUEST,
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 results
         );
@@ -114,9 +112,8 @@ public class CommonExceptionHandler {
                         .build())
                 .toList();
 
-        return new CommonResponse<>(
-                HttpStatus.BAD_REQUEST.value(),
-                HttpStatus.BAD_REQUEST.name(),
+        return CommonResponse.error(
+                HttpStatus.BAD_REQUEST,
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 results
         );
@@ -131,9 +128,8 @@ public class CommonExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public CommonResponse<String> authenticateException(AuthenticationException e) {
-        return new CommonResponse<>(
-                HttpStatus.UNAUTHORIZED.value(),
-                HttpStatus.UNAUTHORIZED.name(),
+        return CommonResponse.error(
+                HttpStatus.UNAUTHORIZED,
                 HttpStatus.UNAUTHORIZED.getReasonPhrase(),
                 e.getMessage()
         );

@@ -53,12 +53,7 @@ public class LoginSuccessHandler implements AuthenticationSuccessHandler {
         // 공통 응답 형식으로 로그인 성공 내용을 작성한다.
         objectMapper.writeValue(
                 response.getWriter(),
-                new CommonResponse<>(
-                        HttpStatus.OK.value(),
-                        HttpStatus.OK.name(),
-                        HttpStatus.OK.getReasonPhrase(),
-                        new LoginResponse("access-token", "refresh-token")
-                )
+                CommonResponse.ok(LoginResponse.of("access-token", "refresh-token"))
         );
     }
 }

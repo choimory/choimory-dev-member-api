@@ -43,9 +43,8 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
         // 공통 응답 형식으로 인증 실패 내용을 작성한다.
         objectMapper.writeValue(
                 response.getWriter(),
-                new CommonResponse<>(
-                        HttpStatus.UNAUTHORIZED.value(),
-                        HttpStatus.UNAUTHORIZED.name(),
+                CommonResponse.error(
+                        HttpStatus.UNAUTHORIZED,
                         exception != null ? exception.getMessage() : HttpStatus.UNAUTHORIZED.getReasonPhrase()
                 )
         );
