@@ -1,6 +1,5 @@
 package dev.choimory.member.api.member.v1.query.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.choimory.member.api.common.domain.document.CommonDateDocument;
 import dev.choimory.member.api.member.v1.query.domain.document.MemberDocument;
 import lombok.Builder;
@@ -10,12 +9,12 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record MemberDocumentDto(
-        @JsonProperty("id") String id, // 회원 ID
-        @JsonProperty("email") String email, // 이메일
-        @JsonProperty("nickname") String nickname, // 닉네임
-        @JsonProperty("password") String password, // 암호화된 비밀번호
-        @JsonProperty("introduce") String introduce, // 소개글
-        @JsonProperty("commonDate") CommonDateDocument commonDate // 공통 일시 정보
+        String id, // 회원 ID
+        String email, // 이메일
+        String nickname, // 닉네임
+        String password, // 암호화된 비밀번호
+        String introduce, // 소개글
+        CommonDateDocument commonDate // 공통 일시 정보
 ) {
 
     /**

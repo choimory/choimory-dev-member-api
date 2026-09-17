@@ -1,6 +1,5 @@
 package dev.choimory.member.api.common.domain.document;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDateTime;
 import lombok.Builder;
 
@@ -9,8 +8,8 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record CommonDateDocument(
-        @JsonProperty("createdAt") LocalDateTime createdAt, // 생성 일시
-        @JsonProperty("modifiedAt") LocalDateTime modifiedAt, // 수정 일시
-        @JsonProperty("deletedAt") LocalDateTime deletedAt // 삭제 일시
+		LocalDateTime createdAt, // 생성 일시
+		LocalDateTime modifiedAt, // 수정 일시
+		LocalDateTime deletedAt // 삭제 일시
 ) {
 }

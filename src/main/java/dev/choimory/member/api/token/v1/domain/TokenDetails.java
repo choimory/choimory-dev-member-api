@@ -1,6 +1,5 @@
 package dev.choimory.member.api.token.v1.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import dev.choimory.member.api.member.v1.query.domain.dto.MemberDocumentDto;
 import lombok.Builder;
 
@@ -9,7 +8,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record TokenDetails(
-        @JsonProperty("email") String email // 이메일
+        String email // 이메일
 ) {
     /**
      * 회원 Document DTO에서 토큰 상세 객체를 생성합니다.

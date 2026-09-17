@@ -1,6 +1,5 @@
 package dev.choimory.member.api.member.v1.command.domain.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 /**
@@ -8,8 +7,8 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record CreateMemberResponse(
-        @JsonProperty("uuid") String uuid, // 가입 대기 UUID
-        @JsonProperty("verifyCode") int verifyCode // 인증 코드
+        String uuid, // 가입 대기 UUID
+        int verifyCode // 인증 코드
 ) {
 
     /**

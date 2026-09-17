@@ -1,6 +1,5 @@
 package dev.choimory.member.api.common.domain.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 import org.springframework.http.HttpStatus;
 
@@ -11,10 +10,10 @@ import org.springframework.http.HttpStatus;
  */
 @Builder(toBuilder = true)
 public record CommonResponse<T>(
-        @JsonProperty("code") int code, // 응답 코드
-        @JsonProperty("name") String name, // 응답 코드명
-        @JsonProperty("message") String message, // 응답 메시지
-        @JsonProperty("data") T data // 응답 데이터
+        int code, // 응답 코드
+        String name, // 응답 코드명
+        String message, // 응답 메시지
+        T data // 응답 데이터
 ) {
 
     /**

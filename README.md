@@ -97,6 +97,7 @@
   - 토큰 Claim에 사용할 `TokenDetails`를 제공한다.
 - `config`
   - ObjectMapper, PasswordEncoder, RedisTemplate, ElasticsearchClient, SecurityFilterChain을 설정한다.
+  - RedisTemplate은 record 타입 정보가 Redis JSON에 포함되도록 Redis 전용 ObjectMapper를 사용한다.
 
 ## API 흐름
 
@@ -133,8 +134,9 @@
 
 ## 코드 규칙
 
-- DTO, Request, Response는 불변 객체로 작성한다.
+- DTO, Request, Response는 Java record와 `@Builder(toBuilder = true)`를 사용해 불변 객체로 작성한다.
 - 데이터 객체 변환은 변환 결과 객체의 정적 팩토리 메소드로 작성한다.
+- 데이터 객체의 정적 팩토리 메소드 내부 생성은 Builder 패턴을 사용한다.
 - Entity에는 DTO 변환 메소드를 작성하지 않는다.
 - Controller는 하나의 Service 함수만 호출한다.
 - Service는 API 흐름을 담당한다.
@@ -149,9 +151,12 @@
 - 토큰 생성과 Redis 토큰 등록은 기존 Kotlin TODO 상태를 유지해 placeholder 값을 응답한다.
 - `LoginRequest`는 기존 Kotlin 파일의 package 불일치를 정리해 `dev.choimory.member.api.login.v1.domain.request`로 이관했다.
 - Elasticsearch Java API Client는 Spring Boot/Spring Data가 관리하는 버전을 사용한다.
+- Redis에 `Object` 타입으로 record를 저장하고 조회할 때 Jackson 타입 정보가 필요하므로, Redis용 `GenericJackson2JsonRedisSerializer`는 record에도 타입 정보를 포함하는 ObjectMapper를 사용한다.
+- record component 이름과 JSON 필드명이 동일한 경우 Jackson record 지원을 사용하며, 별도 `@JsonProperty`를 작성하지 않는다.
 
 ## 검증
 
 - `./gradlew compileJava`
 - `./gradlew compileTestJava`
+- `./gradlew test --tests dev.choimory.member.api.config.RedisConfigTest`
 - `./gradlew test`

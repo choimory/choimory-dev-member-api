@@ -1,6 +1,5 @@
 package dev.choimory.member.api.login.v1.domain.request;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 /**
@@ -8,7 +7,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record LoginRequest(
-        @JsonProperty("email") String email, // 이메일
-        @JsonProperty("password") String password // 비밀번호
+        String email, // 이메일
+        String password // 비밀번호
 ) {
 }

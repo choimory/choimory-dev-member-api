@@ -1,6 +1,5 @@
 package dev.choimory.member.api.common.domain.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 /**
@@ -8,8 +7,8 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record CommonValidateResult(
-        @JsonProperty("field") String field, // 검증 실패 필드명
-        @JsonProperty("rejectValue") Object rejectValue, // 거절된 값
-        @JsonProperty("message") String message // 검증 실패 메시지
+		String field, // 검증 실패 필드명
+		Object rejectValue, // 거절된 값
+		String message // 검증 실패 메시지
 ) {
 }

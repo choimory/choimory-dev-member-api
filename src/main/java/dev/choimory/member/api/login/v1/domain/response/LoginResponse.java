@@ -1,6 +1,5 @@
 package dev.choimory.member.api.login.v1.domain.response;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
 
 /**
@@ -8,8 +7,8 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record LoginResponse(
-        @JsonProperty("accessToken") String accessToken, // 액세스 토큰
-        @JsonProperty("refreshToken") String refreshToken // 리프레시 토큰
+        String accessToken, // 액세스 토큰
+        String refreshToken // 리프레시 토큰
 ) {
 
     /**
