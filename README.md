@@ -15,6 +15,8 @@
 - Build
   - Gradle Groovy DSL
   - Gradle Wrapper
+  - Palantir Java Format
+  - Spotless
 - Framework
   - Spring Boot
   - Spring Web
@@ -142,6 +144,8 @@
 - Service는 API 흐름을 담당한다.
 - Handler는 세부 로직을 담당한다.
 - Java 객체와 필드, 주요 함수에는 한글 Doc Comment를 작성한다.
+- Java 코드 포맷은 Palantir Java Format을 사용한다.
+- Gradle Daemon JDK가 Java 21이 아닐 수 있으므로 `palantir.native.formatter=true`를 사용해 native formatter로 실행한다.
 
 ## 주의 사항
 
@@ -160,3 +164,14 @@
 - `./gradlew compileTestJava`
 - `./gradlew test --tests dev.choimory.member.api.config.RedisConfigTest`
 - `./gradlew test`
+
+## 코드 포맷
+
+- 포맷 검사
+  - `./gradlew spotlessJavaCheck`
+  - `./gradlew spotlessCheck`
+- 포맷 적용
+  - `./gradlew spotlessJavaApply`
+  - `./gradlew spotlessApply`
+- Git diff 대상 포맷
+  - `./gradlew formatDiff`
