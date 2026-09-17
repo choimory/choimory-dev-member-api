@@ -1,9 +1,7 @@
 package dev.choimory.member.api.common.domain.response;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Builder;
-import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
@@ -11,35 +9,13 @@ import org.springframework.http.HttpStatus;
  *
  * @param <T> 응답 데이터 타입
  */
-@Getter
 @Builder(toBuilder = true)
-public final class CommonResponse<T> {
-
-    private final int code; // 응답 코드
-    private final String name; // 응답 코드명
-    private final String message; // 응답 메시지
-    private final T data; // 응답 데이터
-
-    /**
-     * API 공통 응답을 생성합니다.
-     *
-     * @param code 응답 코드
-     * @param name 응답 코드명
-     * @param message 응답 메시지
-     * @param data 응답 데이터
-     */
-    @JsonCreator
-    public CommonResponse(
-            @JsonProperty("code") int code,
-            @JsonProperty("name") String name,
-            @JsonProperty("message") String message,
-            @JsonProperty("data") T data
-    ) {
-        this.code = code;
-        this.name = name;
-        this.message = message;
-        this.data = data;
-    }
+public record CommonResponse<T>(
+        @JsonProperty("code") int code, // 응답 코드
+        @JsonProperty("name") String name, // 응답 코드명
+        @JsonProperty("message") String message, // 응답 메시지
+        @JsonProperty("data") T data // 응답 데이터
+) {
 
     /**
      * 데이터가 없는 API 공통 응답을 생성합니다.

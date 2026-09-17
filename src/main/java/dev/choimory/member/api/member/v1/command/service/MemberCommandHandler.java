@@ -55,7 +55,7 @@ public class MemberCommandHandler {
             long ttl,
             TimeUnit timeUnit
     ) {
-        redisTemplate.opsForValue().set(member.getId() + ":" + verifyCode, member, ttl, timeUnit);
+        redisTemplate.opsForValue().set(member.id() + ":" + verifyCode, member, ttl, timeUnit);
     }
 
     /**
@@ -72,7 +72,7 @@ public class MemberCommandHandler {
             int verifyCode
     ) {
         Object member = redisTemplate.opsForValue().get(uuid + ":" + verifyCode);
-        if (member instanceof MemberEntityDto memberEntityDto && email.equals(memberEntityDto.getEmail())) {
+        if (member instanceof MemberEntityDto memberEntityDto && email.equals(memberEntityDto.email())) {
             return memberEntityDto;
         }
         return null;

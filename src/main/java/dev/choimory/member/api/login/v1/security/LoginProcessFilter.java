@@ -61,8 +61,8 @@ public class LoginProcessFilter extends AbstractAuthenticationProcessingFilter {
 
         // Spring Security 인증 객체로 변환한다.
         UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-                loginRequest.getEmail(),
-                loginRequest.getPassword()
+                loginRequest.email(),
+                loginRequest.password()
         );
 
         // Provider로 인증 처리를 위임한다.

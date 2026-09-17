@@ -1,7 +1,10 @@
 package dev.choimory.member.api.member.v1.query.domain.request;
 
+import lombok.Builder;
+
 /**
  * 회원 조회 요청 객체입니다.
  */
-public final class FindMemberRequest {
+@Builder(toBuilder = true)
+public record FindMemberRequest() {
 }

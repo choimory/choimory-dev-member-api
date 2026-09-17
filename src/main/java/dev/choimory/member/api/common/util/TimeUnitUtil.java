@@ -5,7 +5,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * TimeUnit 관련 표시 문자열을 제공하는 유틸리티입니다.
  */
-public final class TimeUnitUtil {
+public class TimeUnitUtil {
 
     private TimeUnitUtil() {
     }

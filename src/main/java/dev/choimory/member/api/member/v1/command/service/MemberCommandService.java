@@ -31,7 +31,7 @@ public class MemberCommandService {
      */
     public CommonResponse<CreateMemberResponse> signUp(CreateMemberRequest request) {
         // 비밀번호를 암호화한다.
-        String encodedPassword = memberCommandHandler.encodePassword(request.getPassword());
+        String encodedPassword = memberCommandHandler.encodePassword(request.password());
 
         // UUID와 인증 코드를 생성한다.
         String uuid = UuidCreator.getTimeOrderedEpoch().toString();
@@ -40,10 +40,10 @@ public class MemberCommandService {
         // Redis에 인증 대기 회원 정보를 저장한다.
         MemberEntityDto member = MemberEntityDto.builder()
                 .id(uuid)
-                .email(request.getEmail())
+                .email(request.email())
                 .password(encodedPassword)
-                .nickname(request.getNickname())
-                .introduce(request.getIntroduce())
+                .nickname(request.nickname())
+                .introduce(request.introduce())
                 .build();
         memberCommandHandler.setWaitVerifyMember(member, verifyCode, 3, TimeUnit.MINUTES);
 
@@ -62,9 +62,9 @@ public class MemberCommandService {
     public CommonResponse<VerifyMemberResponse> verify(VerifyMemberRequest payload) {
         // Redis에서 인증 대기 회원 정보를 조회한다.
         MemberEntityDto member = memberCommandHandler.getWaitVerifyMember(
-                payload.getUuid(),
-                payload.getEmail(),
-                payload.getVerifyCode()
+                payload.uuid(),
+                payload.email(),
+                payload.verifyCode()
         );
         if (member == null) {
             throw new IllegalArgumentException();
