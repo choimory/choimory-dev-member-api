@@ -65,11 +65,6 @@ public class SecurityConfig {
     @Bean
     public LoginProcessFilter loginFilterConfig() {
         return new LoginProcessFilter(
-                "/login",
-                providerConfig(),
-                loginSuccessHandler,
-                loginFailureHandler,
-                objectMapper
-        );
+                "/login", providerConfig(), loginSuccessHandler, loginFailureHandler, objectMapper);
     }
 }

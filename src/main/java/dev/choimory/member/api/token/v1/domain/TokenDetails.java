@@ -7,9 +7,8 @@ import lombok.Builder;
  * 토큰 Claim에 사용할 인증 상세 객체입니다.
  */
 @Builder(toBuilder = true)
-public record TokenDetails(
-        String email // 이메일
-) {
+public record TokenDetails(String email // 이메일
+        ) {
     /**
      * 회원 Document DTO에서 토큰 상세 객체를 생성합니다.
      *
@@ -27,8 +26,6 @@ public record TokenDetails(
      * @return 토큰 상세 객체
      */
     public static TokenDetails from(MemberDocumentDto member) {
-        return TokenDetails.builder()
-                .email(member.email())
-                .build();
+        return TokenDetails.builder().email(member.email()).build();
     }
 }

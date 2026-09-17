@@ -32,8 +32,7 @@ public class ElasticSearchConfig {
             @Value("${es-host}") String url,
             @Value("${es-port}") int port,
             @Value("${es-user}") String userName,
-            @Value("${es-password}") String password
-    ) {
+            @Value("${es-password}") String password) {
         this.url = url;
         this.port = port;
         this.userName = userName;
@@ -47,7 +46,8 @@ public class ElasticSearchConfig {
      */
     @Bean
     public ElasticsearchClient elasticsearchClient() {
-        RestClient restClient = RestClient.builder(HttpHost.create(url + ":" + port)).build();
+        RestClient restClient =
+                RestClient.builder(HttpHost.create(url + ":" + port)).build();
         RestClientTransport transport = new RestClientTransport(restClient, new JacksonJsonpMapper());
         return new ElasticsearchClient(transport);
     }

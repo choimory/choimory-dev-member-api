@@ -25,9 +25,7 @@ public class RedisConfig {
      */
     @Bean
     public RedisTemplate<String, Object> redisTemplate(
-            RedisConnectionFactory connectionFactory,
-            GenericJackson2JsonRedisSerializer redisValueSerializer
-    ) {
+            RedisConnectionFactory connectionFactory, GenericJackson2JsonRedisSerializer redisValueSerializer) {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
         template.setConnectionFactory(connectionFactory);
         template.setKeySerializer(new StringRedisSerializer());
@@ -55,10 +53,8 @@ public class RedisConfig {
         objectMapper.findAndRegisterModules();
 
         PolymorphicTypeValidator polymorphicTypeValidator = objectMapper.getPolymorphicTypeValidator();
-        RecordSupportingTypeResolver typeResolver = new RecordSupportingTypeResolver(
-                ObjectMapper.DefaultTyping.NON_FINAL,
-                polymorphicTypeValidator
-        );
+        RecordSupportingTypeResolver typeResolver =
+                new RecordSupportingTypeResolver(ObjectMapper.DefaultTyping.NON_FINAL, polymorphicTypeValidator);
         typeResolver.init(JsonTypeInfo.Id.CLASS, null);
         typeResolver.inclusion(JsonTypeInfo.As.PROPERTY);
         objectMapper.setDefaultTyping(typeResolver);
@@ -78,9 +74,7 @@ public class RedisConfig {
          * @param polymorphicTypeValidator 다형성 타입 검증 객체
          */
         private RecordSupportingTypeResolver(
-                ObjectMapper.DefaultTyping defaultTyping,
-                PolymorphicTypeValidator polymorphicTypeValidator
-        ) {
+                ObjectMapper.DefaultTyping defaultTyping, PolymorphicTypeValidator polymorphicTypeValidator) {
             super(defaultTyping, polymorphicTypeValidator);
         }
 

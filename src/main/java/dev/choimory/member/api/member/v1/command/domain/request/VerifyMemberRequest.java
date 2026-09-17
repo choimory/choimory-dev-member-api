@@ -10,5 +10,4 @@ public record VerifyMemberRequest(
         String email, // 이메일
         String uuid, // 가입 대기 UUID
         int verifyCode // 인증 코드
-) {
-}
+        ) {}

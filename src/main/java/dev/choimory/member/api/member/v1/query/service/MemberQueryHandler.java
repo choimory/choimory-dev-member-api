@@ -27,12 +27,10 @@ public class MemberQueryHandler {
      * @param password 원문 비밀번호
      * @return 회원 Document DTO
      */
-    public MemberDocumentDto loginAndValid(
-            String email,
-            String password
-    ) {
+    public MemberDocumentDto loginAndValid(String email, String password) {
         // 이메일로 회원 Document를 조회한다.
-        MemberDocument member = memberQueryRepository.findByEmail(email)
+        MemberDocument member = memberQueryRepository
+                .findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("아이디가 존재하지 않습니다"));
 
         // 비밀번호 일치 여부를 확인한다.

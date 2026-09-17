@@ -13,7 +13,7 @@ public record MemberEntityDto(
         String nickname, // 닉네임
         String password, // 암호화된 비밀번호
         String introduce // 소개글
-) {
+        ) {
 
     /**
      * 회원 DTO를 회원 Entity로 변환합니다.
@@ -22,13 +22,7 @@ public record MemberEntityDto(
      * @return 회원 Entity
      */
     public static MemberEntity toEntity(MemberEntityDto dto) {
-        return MemberEntity.create(
-                dto.id(),
-                dto.email(),
-                dto.nickname(),
-                dto.password(),
-                dto.introduce()
-        );
+        return MemberEntity.create(dto.id(), dto.email(), dto.nickname(), dto.password(), dto.introduce());
     }
 
     /**

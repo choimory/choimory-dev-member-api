@@ -9,7 +9,7 @@ import lombok.Builder;
 public record LoginResponse(
         String accessToken, // 액세스 토큰
         String refreshToken // 리프레시 토큰
-) {
+        ) {
 
     /**
      * 로그인 응답 객체를 생성합니다.
@@ -18,10 +18,7 @@ public record LoginResponse(
      * @param refreshToken 리프레시 토큰
      * @return 로그인 응답 객체
      */
-    public static LoginResponse of(
-            String accessToken,
-            String refreshToken
-    ) {
+    public static LoginResponse of(String accessToken, String refreshToken) {
         return LoginResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

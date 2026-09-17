@@ -7,8 +7,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class TimeUnitUtil {
 
-    private TimeUnitUtil() {
-    }
+    private TimeUnitUtil() {}
 
     /**
      * TimeUnit을 한국어 단위명으로 변환합니다.

@@ -31,10 +31,7 @@ public class CommonExceptionHandler {
     public CommonResponse<String> exception(Exception e) {
         log.error("Unhandled exception", e);
         return CommonResponse.error(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                e.getMessage()
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), e.getMessage());
     }
 
     /**
@@ -48,10 +45,7 @@ public class CommonExceptionHandler {
     public CommonResponse<String> runtimeException(RuntimeException e) {
         log.error("Runtime exception", e);
         return CommonResponse.error(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                e.getMessage()
-        );
+                HttpStatus.INTERNAL_SERVER_ERROR, HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(), e.getMessage());
     }
 
     /**
@@ -79,7 +73,8 @@ public class CommonExceptionHandler {
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public CommonResponse<List<CommonValidateResult>> methodArgumentNotValidException(MethodArgumentNotValidException e) {
+    public CommonResponse<List<CommonValidateResult>> methodArgumentNotValidException(
+            MethodArgumentNotValidException e) {
         List<CommonValidateResult> results = e.getFieldErrors().stream()
                 .map(fieldError -> CommonValidateResult.builder()
                         .field(fieldError.getField())
@@ -88,11 +83,7 @@ public class CommonExceptionHandler {
                         .build())
                 .toList();
 
-        return CommonResponse.error(
-                HttpStatus.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                results
-        );
+        return CommonResponse.error(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), results);
     }
 
     /**
@@ -112,11 +103,7 @@ public class CommonExceptionHandler {
                         .build())
                 .toList();
 
-        return CommonResponse.error(
-                HttpStatus.BAD_REQUEST,
-                HttpStatus.BAD_REQUEST.getReasonPhrase(),
-                results
-        );
+        return CommonResponse.error(HttpStatus.BAD_REQUEST, HttpStatus.BAD_REQUEST.getReasonPhrase(), results);
     }
 
     /**
@@ -128,10 +115,6 @@ public class CommonExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public CommonResponse<String> authenticateException(AuthenticationException e) {
-        return CommonResponse.error(
-                HttpStatus.UNAUTHORIZED,
-                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                e.getMessage()
-        );
+        return CommonResponse.error(HttpStatus.UNAUTHORIZED, HttpStatus.UNAUTHORIZED.getReasonPhrase(), e.getMessage());
     }
 }

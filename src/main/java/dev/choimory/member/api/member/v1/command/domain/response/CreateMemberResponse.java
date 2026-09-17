@@ -9,7 +9,7 @@ import lombok.Builder;
 public record CreateMemberResponse(
         String uuid, // 가입 대기 UUID
         int verifyCode // 인증 코드
-) {
+        ) {
 
     /**
      * 회원가입 응답 객체를 생성합니다.
@@ -18,13 +18,7 @@ public record CreateMemberResponse(
      * @param verifyCode 인증 코드
      * @return 회원가입 응답 객체
      */
-    public static CreateMemberResponse of(
-            String uuid,
-            int verifyCode
-    ) {
-        return CreateMemberResponse.builder()
-                .uuid(uuid)
-                .verifyCode(verifyCode)
-                .build();
+    public static CreateMemberResponse of(String uuid, int verifyCode) {
+        return CreateMemberResponse.builder().uuid(uuid).verifyCode(verifyCode).build();
     }
 }

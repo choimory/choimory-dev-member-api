@@ -8,8 +8,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record CommonDateDocument(
-		LocalDateTime createdAt, // 생성 일시
-		LocalDateTime modifiedAt, // 수정 일시
-		LocalDateTime deletedAt // 삭제 일시
-) {
-}
+        LocalDateTime createdAt, // 생성 일시
+        LocalDateTime modifiedAt, // 수정 일시
+        LocalDateTime deletedAt // 삭제 일시
+        ) {}

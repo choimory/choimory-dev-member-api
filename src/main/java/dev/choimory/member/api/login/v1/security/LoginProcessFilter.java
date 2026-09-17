@@ -34,8 +34,7 @@ public class LoginProcessFilter extends AbstractAuthenticationProcessingFilter {
             AuthenticationManager authenticationManager,
             AuthenticationSuccessHandler successHandler,
             AuthenticationFailureHandler failureHandler,
-            ObjectMapper objectMapper
-    ) {
+            ObjectMapper objectMapper) {
         super(url, authenticationManager);
         this.objectMapper = objectMapper;
         setAuthenticationSuccessHandler(successHandler);
@@ -52,18 +51,14 @@ public class LoginProcessFilter extends AbstractAuthenticationProcessingFilter {
      * @throws IOException 요청 payload 읽기 실패 시 발생
      */
     @Override
-    public Authentication attemptAuthentication(
-            HttpServletRequest request,
-            HttpServletResponse response
-    ) throws AuthenticationException, IOException {
+    public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
+            throws AuthenticationException, IOException {
         // 요청 payload를 로그인 요청 객체로 변환한다.
         LoginRequest loginRequest = objectMapper.readValue(request.getInputStream(), LoginRequest.class);
 
         // Spring Security 인증 객체로 변환한다.
-        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(
-                loginRequest.email(),
-                loginRequest.password()
-        );
+        UsernamePasswordAuthenticationToken token =
+                new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password());
 
         // Provider로 인증 처리를 위임한다.
         return getAuthenticationManager().authenticate(token);

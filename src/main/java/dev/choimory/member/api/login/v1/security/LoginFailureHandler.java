@@ -31,10 +31,8 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
      */
     @Override
     public void onAuthenticationFailure(
-            HttpServletRequest request,
-            HttpServletResponse response,
-            AuthenticationException exception
-    ) throws IOException {
+            HttpServletRequest request, HttpServletResponse response, AuthenticationException exception)
+            throws IOException {
         // HTTP 응답 기본값을 설정한다.
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
@@ -45,8 +43,6 @@ public class LoginFailureHandler implements AuthenticationFailureHandler {
                 response.getWriter(),
                 CommonResponse.error(
                         HttpStatus.UNAUTHORIZED,
-                        exception != null ? exception.getMessage() : HttpStatus.UNAUTHORIZED.getReasonPhrase()
-                )
-        );
+                        exception != null ? exception.getMessage() : HttpStatus.UNAUTHORIZED.getReasonPhrase()));
     }
 }

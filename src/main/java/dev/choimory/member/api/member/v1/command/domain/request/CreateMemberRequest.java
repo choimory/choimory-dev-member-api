@@ -14,5 +14,4 @@ public record CreateMemberRequest(
         @NotBlank String nickname, // 닉네임
         String introduce, // 소개글
         MultipartFile profile // 프로필 파일
-) {
-}
+        ) {}

@@ -32,13 +32,7 @@ public class MemberEntity extends CommonDateEntity {
      * @param password 암호화된 비밀번호
      * @param introduce 소개글
      */
-    private MemberEntity(
-            String id,
-            String email,
-            String nickname,
-            String password,
-            String introduce
-    ) {
+    private MemberEntity(String id, String email, String nickname, String password, String introduce) {
         this.id = id;
         this.email = email;
         this.nickname = nickname;
@@ -56,13 +50,7 @@ public class MemberEntity extends CommonDateEntity {
      * @param introduce 소개글
      * @return 회원 Entity
      */
-    public static MemberEntity create(
-            String id,
-            String email,
-            String nickname,
-            String password,
-            String introduce
-    ) {
+    public static MemberEntity create(String id, String email, String nickname, String password, String introduce) {
         return new MemberEntity(id, email, nickname, password, introduce);
     }
 }

@@ -13,8 +13,7 @@ public class TestChoimoryDevMemberApiApplication {
      * @param args 실행 인자
      */
     public static void main(String[] args) {
-        SpringApplication
-                .from(ChoimoryDevMemberApiApplication::main)
+        SpringApplication.from(ChoimoryDevMemberApiApplication::main)
                 .with(TestcontainersConfiguration.class)
                 .run(args);
     }

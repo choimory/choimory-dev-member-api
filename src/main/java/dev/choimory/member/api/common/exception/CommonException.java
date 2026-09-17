@@ -31,12 +31,7 @@ public class CommonException extends RuntimeException {
      * @param codeName 응답 코드명
      * @param msg 응답 메시지
      */
-    public CommonException(
-            HttpStatus status,
-            Integer code,
-            String codeName,
-            String msg
-    ) {
+    public CommonException(HttpStatus status, Integer code, String codeName, String msg) {
         super(msg);
         this.status = status;
         this.code = code;

@@ -9,5 +9,4 @@ import lombok.Builder;
 public record LoginRequest(
         String email, // 이메일
         String password // 비밀번호
-) {
-}
+        ) {}

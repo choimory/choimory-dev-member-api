@@ -34,16 +34,12 @@ class RedisConfigTest {
         String json = new String(serialized, StandardCharsets.UTF_8);
 
         // record 객체에 타입 정보가 포함되었는지 확인한다.
-        assertThat(json)
-                .contains("\"@class\"")
-                .contains(MemberEntityDto.class.getName());
+        assertThat(json).contains("\"@class\"").contains(MemberEntityDto.class.getName());
 
         // JSON byte array를 다시 객체로 역직렬화한다.
         Object deserialized = serializer.deserialize(serialized);
 
         // 역직렬화 결과가 기존 record 타입과 값으로 복원되었는지 확인한다.
-        assertThat(deserialized)
-                .isInstanceOf(MemberEntityDto.class)
-                .isEqualTo(member);
+        assertThat(deserialized).isInstanceOf(MemberEntityDto.class).isEqualTo(member);
     }
 }

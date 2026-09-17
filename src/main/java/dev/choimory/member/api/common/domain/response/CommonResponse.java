@@ -14,7 +14,7 @@ public record CommonResponse<T>(
         String name, // 응답 코드명
         String message, // 응답 메시지
         T data // 응답 데이터
-) {
+        ) {
 
     /**
      * 데이터가 없는 API 공통 응답을 생성합니다.
@@ -23,11 +23,7 @@ public record CommonResponse<T>(
      * @param name 응답 코드명
      * @param message 응답 메시지
      */
-    public CommonResponse(
-            int code,
-            String name,
-            String message
-    ) {
+    public CommonResponse(int code, String name, String message) {
         this(code, name, message, null);
     }
 
@@ -40,11 +36,7 @@ public record CommonResponse<T>(
      * @return API 공통 응답
      * @param <T> 응답 데이터 타입
      */
-    public static <T> CommonResponse<T> of(
-            HttpStatus status,
-            String message,
-            T data
-    ) {
+    public static <T> CommonResponse<T> of(HttpStatus status, String message, T data) {
         return CommonResponse.<T>builder()
                 .code(status.value())
                 .name(status.name())
@@ -82,10 +74,7 @@ public record CommonResponse<T>(
      * @param message 응답 메시지
      * @return 오류 API 공통 응답
      */
-    public static CommonResponse<String> error(
-            HttpStatus status,
-            String message
-    ) {
+    public static CommonResponse<String> error(HttpStatus status, String message) {
         return CommonResponse.<String>builder()
                 .code(status.value())
                 .name(status.name())
@@ -103,11 +92,7 @@ public record CommonResponse<T>(
      * @return 오류 API 공통 응답
      * @param <T> 오류 데이터 타입
      */
-    public static <T> CommonResponse<T> error(
-            HttpStatus status,
-            String message,
-            T data
-    ) {
+    public static <T> CommonResponse<T> error(HttpStatus status, String message, T data) {
         return of(status, message, data);
     }
 }

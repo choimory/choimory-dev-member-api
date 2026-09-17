@@ -49,12 +49,7 @@ public class MemberCommandHandler {
      * @param ttl 만료 시간
      * @param timeUnit 만료 시간 단위
      */
-    public void setWaitVerifyMember(
-            MemberEntityDto member,
-            String verifyCode,
-            long ttl,
-            TimeUnit timeUnit
-    ) {
+    public void setWaitVerifyMember(MemberEntityDto member, String verifyCode, long ttl, TimeUnit timeUnit) {
         redisTemplate.opsForValue().set(member.id() + ":" + verifyCode, member, ttl, timeUnit);
     }
 
@@ -66,11 +61,7 @@ public class MemberCommandHandler {
      * @param verifyCode 인증 코드
      * @return 인증 대기 회원 정보
      */
-    public MemberEntityDto getWaitVerifyMember(
-            String uuid,
-            String email,
-            int verifyCode
-    ) {
+    public MemberEntityDto getWaitVerifyMember(String uuid, String email, int verifyCode) {
         Object member = redisTemplate.opsForValue().get(uuid + ":" + verifyCode);
         if (member instanceof MemberEntityDto memberEntityDto && email.equals(memberEntityDto.email())) {
             return memberEntityDto;

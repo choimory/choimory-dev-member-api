@@ -7,8 +7,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record CommonValidateResult(
-		String field, // 검증 실패 필드명
-		Object rejectValue, // 거절된 값
-		String message // 검증 실패 메시지
-) {
-}
+        String field, // 검증 실패 필드명
+        Object rejectValue, // 거절된 값
+        String message // 검증 실패 메시지
+        ) {}

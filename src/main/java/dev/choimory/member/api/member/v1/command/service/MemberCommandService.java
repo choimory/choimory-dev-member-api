@@ -61,11 +61,8 @@ public class MemberCommandService {
     @Transactional
     public CommonResponse<VerifyMemberResponse> verify(VerifyMemberRequest payload) {
         // Redis에서 인증 대기 회원 정보를 조회한다.
-        MemberEntityDto member = memberCommandHandler.getWaitVerifyMember(
-                payload.uuid(),
-                payload.email(),
-                payload.verifyCode()
-        );
+        MemberEntityDto member =
+                memberCommandHandler.getWaitVerifyMember(payload.uuid(), payload.email(), payload.verifyCode());
         if (member == null) {
             throw new IllegalArgumentException();
         }

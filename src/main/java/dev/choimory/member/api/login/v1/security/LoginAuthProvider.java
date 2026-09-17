@@ -41,8 +41,7 @@ public class LoginAuthProvider implements AuthenticationProvider {
                     HttpStatus.BAD_REQUEST,
                     HttpStatus.BAD_REQUEST.value(),
                     HttpStatus.BAD_REQUEST.name(),
-                    HttpStatus.BAD_REQUEST.getReasonPhrase()
-            );
+                    HttpStatus.BAD_REQUEST.getReasonPhrase());
         }
 
         // 별도 비즈니스 로직으로 로그인 정보를 검증한다.

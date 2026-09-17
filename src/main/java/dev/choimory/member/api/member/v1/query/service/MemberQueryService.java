@@ -20,10 +20,7 @@ public class MemberQueryService {
      * @param password 원문 비밀번호
      * @return 회원 Document DTO
      */
-    public MemberDocumentDto login(
-            String email,
-            String password
-    ) {
+    public MemberDocumentDto login(String email, String password) {
         // 로그인 대상 회원을 검증하고 조회한다.
         return memberQueryHandler.loginAndValid(email, password);
     }

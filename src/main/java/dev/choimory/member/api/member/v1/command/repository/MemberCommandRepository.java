@@ -8,5 +8,4 @@ import org.springframework.stereotype.Repository;
  * 회원 command RDB 접근 Repository입니다.
  */
 @Repository
-public interface MemberCommandRepository extends JpaRepository<MemberEntity, String> {
-}
+public interface MemberCommandRepository extends JpaRepository<MemberEntity, String> {}

@@ -15,7 +15,7 @@ public record MemberDocumentDto(
         String password, // 암호화된 비밀번호
         String introduce, // 소개글
         CommonDateDocument commonDate // 공통 일시 정보
-) {
+        ) {
 
     /**
      * 회원 Document를 DTO로 변환합니다.
