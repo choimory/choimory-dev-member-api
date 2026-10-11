@@ -8,7 +8,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
  * Choimory 개발 회원 API 애플리케이션 실행 클래스입니다.
  */
 @SpringBootApplication
-@EnableJpaAuditing
+@EnableJpaAuditing(modifyOnCreate = false)
 public class ChoimoryDevMemberApiApplication {
     /**
      * Spring Boot 애플리케이션을 실행합니다.

@@ -98,19 +98,39 @@ class BaseEntityTest {
     }
 
     /**
-     * JPA가 사용하는 기본 생성자는 id를 채번하지 않는지 확인합니다.
+     * 어떤 생성자로 만들어도(JPA가 사용하는 기본 생성자 포함) id가 UUID v7로 채번되는지 확인합니다.
+     * 채번을 BaseEntity의 기본 생성자 한 곳에서 하므로 Lombok이 만든 생성자로 만들어도 빠뜨릴 수 없습니다.
+     * (DB에서 읽을 때도 생성되지만 곧바로 DB 값으로 덮어씁니다)
      *
      * @throws ReflectiveOperationException 리플렉션 호출에 실패한 경우 발생
      */
     @Test
-    void jpaConstructorDoesNotGenerateId() throws ReflectiveOperationException {
+    void jpaConstructorAlsoGeneratesId() throws ReflectiveOperationException {
         // 기본 생성자로 엔티티를 생성한다.
         var constructor = TestBaseEntity.class.getDeclaredConstructor();
         constructor.setAccessible(true);
         TestBaseEntity entity = constructor.newInstance();
 
-        // DB에서 읽을 때 사용하므로 id를 채번하지 않아야 한다.
-        assertThat(entity.getId()).isNull();
+        // id가 UUID v7로 채번되어 있어야 한다.
+        assertThat(entity.getId()).hasSize(36);
+        assertThat(UUID.fromString(entity.getId()).version()).isEqualTo(7);
+    }
+
+    /**
+     * DB에서 읽은 엔티티의 id는 생성자에서 만든 값이 아니라 DB에 저장된 값인지 확인합니다.
+     */
+    @Test
+    void loadedEntityKeepsStoredId() {
+        // 엔티티를 저장하고 영속성 컨텍스트를 비운 뒤 다시 조회한다.
+        TestBaseEntity entity = TestBaseEntity.create("name");
+        String storedId = entity.getId();
+        em.persist(entity);
+        em.flush();
+        em.clear();
+        TestBaseEntity loaded = em.find(TestBaseEntity.class, storedId);
+
+        // 조회한 엔티티의 id는 저장된 id와 같아야 한다.
+        assertThat(loaded.getId()).isEqualTo(storedId);
     }
 
     // ---------------------------------------------------------------------------------------------
@@ -183,28 +203,28 @@ class BaseEntityTest {
     // ---------------------------------------------------------------------------------------------
 
     /**
-     * 저장 시 createdAt과 modifiedAt이 채워지는지 확인합니다.
+     * 저장 시 createdAt만 채워지고 수정 이력이 없는 modifiedAt은 null인지 확인합니다.
      */
     @Test
-    void auditingFillsDatesOnPersist() {
+    void auditingFillsOnlyCreatedAtOnPersist() {
         // 엔티티를 저장한다.
         TestBaseEntity entity = TestBaseEntity.create("name");
         em.persist(entity);
         em.flush();
 
-        // 생성 일시와 수정 일시가 채워져야 하고 삭제 일시는 비어 있어야 한다.
+        // 생성 일시만 채워지고 수정 일시와 삭제 일시는 비어 있어야 한다.
         assertThat(entity.getCreatedAt()).isNotNull();
-        assertThat(entity.getModifiedAt()).isNotNull();
+        assertThat(entity.getModifiedAt()).isNull();
         assertThat(entity.getDeletedAt()).isNull();
     }
 
     /**
-     * 수정 시 modifiedAt만 갱신되고 createdAt은 유지되는지 확인합니다.
+     * 처음 수정할 때 modifiedAt이 채워지고 이후 수정마다 갱신되며 createdAt은 유지되는지 확인합니다.
      *
      * @throws InterruptedException 대기 중 인터럽트된 경우 발생
      */
     @Test
-    void modifiedAtChangesOnUpdateButCreatedAtDoesNot() throws InterruptedException {
+    void modifiedAtIsFilledOnUpdateAndCreatedAtDoesNotChange() throws InterruptedException {
         // 엔티티를 저장하고 다시 조회한다.
         TestBaseEntity entity = TestBaseEntity.create("name");
         em.persist(entity);
@@ -212,16 +232,25 @@ class BaseEntityTest {
         em.clear();
         TestBaseEntity loaded = em.find(TestBaseEntity.class, entity.getId());
         LocalDateTime createdAt = loaded.getCreatedAt();
-        LocalDateTime modifiedAt = loaded.getModifiedAt();
 
-        // 시간 간격을 두고 수정한다.
+        // 수정 이력이 없으므로 modifiedAt은 null이어야 한다.
+        assertThat(loaded.getModifiedAt()).isNull();
+
+        // 시간 간격을 두고 처음 수정한다.
         Thread.sleep(10);
         loaded.rename("changed");
         em.flush();
 
-        // 수정 일시만 갱신되어야 한다.
+        // 수정 일시가 채워지고 생성 일시는 유지되어야 한다.
+        LocalDateTime firstModifiedAt = loaded.getModifiedAt();
         assertThat(loaded.getCreatedAt()).isEqualTo(createdAt);
-        assertThat(loaded.getModifiedAt()).isAfter(modifiedAt);
+        assertThat(firstModifiedAt).isAfter(createdAt);
+
+        // 시간 간격을 두고 다시 수정하면 수정 일시가 갱신되어야 한다.
+        Thread.sleep(10);
+        loaded.rename("changed again");
+        em.flush();
+        assertThat(loaded.getModifiedAt()).isAfter(firstModifiedAt);
     }
 
     // ---------------------------------------------------------------------------------------------

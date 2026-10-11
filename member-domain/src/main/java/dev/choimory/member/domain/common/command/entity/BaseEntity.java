@@ -20,7 +20,8 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
  * 모든 엔티티의 공통 부모입니다.
  * 공통 컬럼(id, created_at, modified_at, deleted_at)과 아래 동작을 제공합니다.
  * <ul>
- *   <li>id: 서버에서 UUID v7로 채번합니다. 하위 엔티티는 정적 팩토리에서 {@code super(newId())}로 채번합니다.</li>
+ *   <li>id: 서버에서 UUID v7로 채번합니다. 기본 생성자에서 채번하므로 Lombok이 만든 생성자로 만들어도 빠뜨릴 수 없습니다.
+ *       JPA가 DB에서 읽을 때도 기본 생성자가 호출되어 채번되지만, 곧바로 DB에 저장된 값으로 덮어씁니다.</li>
  *   <li>Persistable: id를 미리 채번하므로 Spring Data가 새 엔티티인지 판단하지 못해 save 시 불필요한 SELECT가 실행됩니다.
  *       이를 막기 위해 새 엔티티 여부를 직접 알려줍니다.</li>
  *   <li>Auditing: created_at, modified_at을 JPA Auditing으로 채웁니다.</li>
@@ -55,17 +56,12 @@ public abstract class BaseEntity implements Persistable<String> {
     private boolean newEntity = true; // 새 엔티티 여부 (저장 또는 조회 후 false)
 
     /**
-     * JPA가 DB에서 읽을 때 사용하는 기본 생성자입니다. id를 채번하지 않습니다.
+     * 엔티티를 생성할 때 UUID v7을 채번하는 기본 생성자입니다.
+     * 하위 엔티티의 Lombok 생성자(@NoArgsConstructor, @AllArgsConstructor)가 암묵적으로 호출합니다.
+     * JPA가 DB에서 읽을 때도 호출되지만 id는 곧바로 DB에 저장된 값으로 덮어씁니다.
      */
-    protected BaseEntity() {}
-
-    /**
-     * 새 엔티티를 생성할 때 사용하는 생성자입니다.
-     *
-     * @param id 채번된 ID. {@link #newId()}로 만듭니다.
-     */
-    protected BaseEntity(String id) {
-        this.id = id;
+    protected BaseEntity() {
+        this.id = newId();
     }
 
     /**
@@ -73,7 +69,7 @@ public abstract class BaseEntity implements Persistable<String> {
      *
      * @return 36자 문자열 UUID v7
      */
-    protected static String newId() {
+    private static String newId() {
         return UuidCreator.getTimeOrderedEpoch().toString();
     }
 

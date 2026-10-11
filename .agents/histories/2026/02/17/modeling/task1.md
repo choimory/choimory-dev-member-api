@@ -37,6 +37,19 @@
   - [남은 선택 사항](#남은-선택-사항-1)
   - [검증 결과](#검증-결과-4)
   - [커밋 단위 제안](#커밋-단위-제안-4)
+- [6단계. 엔티티](#6단계-엔티티)
+  - [6단계 전에 결정된 사항](#6단계-전에-결정된-사항)
+  - [구현한 엔티티](#구현한-엔티티)
+  - [Builder 적용](#builder-적용)
+  - [테스트](#테스트-2)
+  - [임의로 정한 부분](#임의로-정한-부분-1)
+  - [검증 결과](#검증-결과-5)
+  - [커밋 단위 제안](#커밋-단위-제안-5)
+- [6단계 후속 변경. 엔티티 생성 방식 정리](#6단계-후속-변경-엔티티-생성-방식-정리)
+- [7단계. 엔티티 DTO](#7단계-엔티티-dto)
+- [8단계. DDL과 엔티티 정합성 검증](#8단계-ddl과-엔티티-정합성-검증)
+- [9단계. 최종 점검](#9단계-최종-점검)
+- [엔티티 create() 제거와 클래스 레벨 Builder 전환](#엔티티-create-제거와-클래스-레벨-builder-전환)
 
 ---
 
@@ -390,3 +403,315 @@ member-domain/src/main/java/dev/choimory/member/domain 아래에 enum 4개를 �
 ## 커밋 단위 제안
 
 - 5단계(enum 4개, EnumValuesTest)는 4단계와 같은 커밋으로 묶거나 별도 커밋으로 분리해도 됨
+
+---
+
+# 6단계. 엔티티
+
+## 6단계 전에 결정된 사항
+
+1. local 프로필의 sql init은 `mode: always`를 유지함 (embedded는 임베디드 DB에서만 동작하므로 Postgres에서는 스크립트가 실행되지 않음)
+2. modified_at은 수정 이력이 없으면 null
+   - `@EnableJpaAuditing(modifyOnCreate = false)`를 ChoimoryDevMemberApiApplication과 member-domain 테스트 설정(JpaAuditingTestConfiguration)에 적용
+   - 4단계와 5단계 섹션에서 이 속성을 `modifyOnCreation`이라고 적은 것은 오기이며 실제 이름은 `modifyOnCreate`임 (컴파일 오류로 확인)
+   - 테스트 변경: BaseEntityTest의 저장 시 modifiedAt이 null, 처음 수정할 때 채워지고 이후 수정마다 갱신되는지 확인(2건 수정), JpaConfigTest에 앱의 Auditing 설정 확인 1건 추가 (먼저 테스트를 바꿔 3건이 실패하는 것을 확인한 뒤 설정 변경)
+
+## 구현한 엔티티
+
+member-domain의 각 패키지 command/entity에 12개. 모두 BaseEntity를 상속하고 `@SQLRestriction("deleted_at IS NULL")`을 선언하며 Lombok `@Getter`, `@NoArgsConstructor(access = PROTECTED)`를 사용. 테이블명과 컬럼명은 `@Table`, `@Column`으로 명시하고 enum은 `@Enumerated(EnumType.STRING)`.
+
+| 패키지 | 엔티티 | 하위 컬렉션 (cascade) |
+|---|---|---|
+| member | Member | images, suspensions, authorities, agreements (ALL) |
+| member | MemberImage, MemberSuspension | 없음 |
+| member | Follow | 없음. Member에 컬렉션을 두지 않고 Follow의 @ManyToOne으로만 연결 |
+| authority | Authority | permissions (ALL) |
+| authority | Permission | actions (ALL), 메뉴는 참조만 |
+| authority | PermissionAction, MemberAuthority | 없음 |
+| authority | Menu | children (PERSIST, MERGE만) |
+| agreement | Agreement | answers (ALL) |
+| agreement | AgreementAnswer, MemberAgreement | 없음 |
+
+- 연관관계는 모두 @ManyToOne(fetch = LAZY, optional = false), 단 Menu의 parent는 nullable
+- orphanRemoval은 어디에도 사용하지 않음. 참조만 하는 관계(MemberAuthority→Authority, MemberAgreement→AgreementAnswer, Permission→Menu, Follow→Member)에는 cascade 없음
+- 자식은 정적 팩토리 create()에서 부모 컬렉션(addXxx)에 스스로 등록. 부모만 저장해도 cascade로 자식이 함께 저장됨
+- Follow.create()는 자기 팔로우를 IllegalArgumentException으로 막음 (DB의 CHECK 제약과 같은 규칙)
+- Member의 수정 메소드: updateProfile, changePassword, changeStatus (계획에 명시되지 않았으나 컬럼에 대응하는 최소한의 수정 메소드)
+- id는 엔티티가 BaseEntity의 `newId()`를 생성자에서 호출하여 채번
+
+## Builder 적용
+
+- 컨벤션(code-convention-springboot.md)은 DTO, 요청 객체, 응답 객체의 정적 팩토리를 Builder 패턴으로 작성하도록 하고, Entity 예시는 private 생성자를 new로 호출하는 방식임
+- 결정: 엔티티의 create()도 생성자를 직접 호출하지 않고 Builder로 생성해 반환
+  - private 생성자에 `@Builder(access = AccessLevel.PRIVATE)`를 붙이고 create()는 `X.builder()...build()`로 생성. id 채번(super(newId()))은 생성자에 있으므로 유지되고, 부모 컬렉션 등록은 create()에 그대로 있음
+  - 12개 엔티티 모두 적용. src/main에서 엔티티를 new로 직접 생성하는 곳 없음
+- EntityRulesTest 규칙 추가
+  - 실제 엔티티가 모두 Lombok Builder 클래스({클래스명}Builder)를 가졌는지 확인
+  - 검사 로직이 Builder 없는 클래스(테스트 전용 엔티티)를 실제로 잡아내는지 확인
+  - 먼저 규칙 테스트를 추가하여 12개가 위반으로 걸리는 것을 확인한 뒤 리팩터링
+- 컨벤션 문서의 Entity 예시와 달라지는 부분이므로 문서를 같은 방식으로 맞출지는 미정 (문서는 수정하지 않음)
+
+## 테스트
+
+TDD: 테스트를 먼저 작성하여 엔티티 클래스가 없어 컴파일에 실패하는 것을 확인한 뒤 구현. 엔티티 테스트는 `@JpaEntityTest`(@DataJpaTest, Testcontainers Postgres 16에 docs/db의 DDL 적용, `ddl-auto=validate`)로 실행하므로 엔티티 매핑이 DDL과 어긋나면 컨텍스트가 뜨지 않음. 8단계의 DDL 정합성 검증을 상당 부분 앞당겨 확인한 셈.
+
+- 테스트 도구: JpaEntityTest(메타 어노테이션), EntityFixtures(unique 제약에 걸리지 않는 객체 생성)
+- MemberEntitiesTest 13건: Member 생성, 수정 메소드, 저장과 조회, enum 문자열 저장, email 중복 거부, soft delete된 회원 제외(네이티브로는 조회), 회원 삭제 시 하위 데이터 cascade 삭제, 이미지와 정지 이력의 등록 및 cascade 저장과 조회, soft delete된 이미지는 컬렉션에서 제외, Follow의 자기 팔로우 거부, 저장과 조회, hard delete, 중복 거부
+- AuthorityEntitiesTest 5건: 권한 저장과 코드 문자열 저장, 하위 메뉴 등록과 cascade, 하위 메뉴가 있는 메뉴 삭제 실패, permission과 action의 cascade 저장과 조회와 action 문자열 저장, 회원 권한 cascade와 회원 삭제 시 권한은 남음
+- AgreementEntitiesTest 5건: 약관 생성, 선택 항목 등록과 cascade, soft delete된 선택 항목은 컬렉션에서 제외, 회원 동의 이력 cascade와 회원 삭제 시 선택 항목은 남음, 중복 동의 거부
+- EntityRulesTest: 이제 실제 엔티티 12개를 검사하여 통과(더 이상 빈 검사가 아님)
+
+## 임의로 정한 부분
+
+- Member.create()는 회원 상태를 인자로 받음. 가입 시 기본 상태(REGISTER)로 고정할지는 서비스 구현 때 정해도 됨
+- 엔티티 테스트용 헬퍼로 JpaEntityTest, EntityFixtures를 만듦
+
+## 검증 결과
+
+- ./gradlew build 통과
+- 테스트 81건 모두 통과
+  - member-domain 69건: EntityRulesTest 4건, EnumValuesTest 4건, AgreementEntitiesTest 5건, AuthorityEntitiesTest 5건, BaseEntityTest 15건, DdlScriptTest 23건, MemberEntitiesTest 13건
+  - member-api 12건
+
+## 커밋 단위 제안
+
+- modified_at 설정 변경(modifyOnCreate), 6단계 엔티티, Builder 적용을 하나의 커밋으로 묶거나 modifyOnCreate 변경만 별도 커밋으로 분리해도 됨
+
+---
+
+# 6단계 후속 변경. 엔티티 생성 방식 정리
+
+6단계 구현 후 엔티티 생성 방식을 아래와 같이 바꿈. 위 "6단계"의 "Builder 적용" 섹션은 바뀌기 전 기록이며 이 섹션이 최종임.
+
+## 요청 사항
+
+1. Builder 어노테이션을 클래스 레벨에 부여
+2. 엔티티에 Lombok AllArgsConstructor 추가
+3. @Table 제거 (테이블 이름은 엔티티 이름을 따르므로 불필요)
+
+## 논의와 결정
+
+- 생성자와 Builder 접근 수준
+  - @NoArgsConstructor(PROTECTED): JPA가 DB에서 읽을 때 기본 생성자가 필요하고 private이면 안 되므로 필요한 최소 공개 범위. 컨벤션의 Entity 예시와 같음
+  - private 생성자와 private Builder: 컨벤션에 없는 선택으로, 생성 경로를 create() 하나로 막으려는 의도. create()가 부모 컬렉션 등록(부모 저장 시 cascade로 함께 저장되도록)과 생성 규칙(자기 팔로우 검사)을 담당하므로 우회되면 자식 누락 같은 문제가 조용히 생김
+- 외부(예: member-api의 Request.toEntity())에서 Builder를 쓸 수 있는지
+  - 클래스 레벨 private Builder만 두면 외부에서는 create() 위치 인자만 가능(인자가 많은 MemberImage는 불편)
+  - 클래스 레벨 public Builder는 build()가 생성자를 직접 호출하므로 create()의 규칙을 우회할 수 있음
+  - 결정(B안): create() 메소드에 @Builder를 붙여 외부용 Builder가 항상 create()를 거치도록 함
+
+## 최종 구조
+
+각 엔티티(12개)는 아래 구조.
+
+```java
+@Entity
+@SQLRestriction("deleted_at IS NULL")
+@Getter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Builder(access = AccessLevel.PRIVATE, builderMethodName = "initBuilder", builderClassName = "MemberInit")
+public class Member extends BaseEntity {
+    // 컬렉션 필드는 @Builder.Default
+    // ...
+
+    @Builder // 외부용 Builder(Member.builder()). build()가 create()를 호출한다
+    public static Member create(...) {
+        return Member.initBuilder()...build(); // 인스턴스는 private Builder로 생성한다. 생성자를 직접 호출하지 않는다
+    }
+}
+```
+
+- 외부용 Builder: create()에 붙인 @Builder (`X.builder()`, 클래스 `XBuilder`, public). build()가 create()를 호출하므로 부모 등록과 생성 규칙을 우회할 수 없음
+- 인스턴스 생성용 Builder: 클래스 레벨 @Builder(access = PRIVATE). 이름이 겹치지 않도록 `initBuilder()`, `XInit`으로 지정. create() 안에서만 사용
+- 컬렉션 필드(images, suspensions, authorities, agreements, permissions, actions, children, answers)에 @Builder.Default. 클래스 레벨 @Builder는 필드 초기값(new ArrayList<>())을 무시하기 때문
+- @Table 제거. 테이블 이름은 엔티티 이름을 snake_case로 변환한 이름 (Member → member, MemberImage → member_image, PermissionAction → permission_action). ddl-auto=validate 테스트가 통과하므로 DDL과 일치함
+
+## id 채번 위치 변경
+
+- Lombok이 만드는 생성자는 부모의 기본 생성자(super())를 호출하므로 손으로 쓴 생성자의 `super(newId())`를 쓸 수 없게 됨
+- BaseEntity의 기본 생성자에서 UUID v7을 채번하도록 변경. BaseEntity(String id) 생성자를 제거하고 newId()는 private으로 변경
+- 효과: 어떤 생성자나 Builder로 만들어도 채번을 빠뜨릴 수 없음
+- 대가: JPA가 DB에서 읽을 때도 기본 생성자가 호출되어 UUID를 한 번 만들고 곧바로 DB 값으로 덮어씀 (비용은 무시할 수준). 이전에 정한 "JPA 기본 생성자는 채번하지 않음"을 번복한 것
+- 테스트 변경: BaseEntityTest의 "JPA 기본 생성자는 id를 채번하지 않는다"를 "JPA 기본 생성자도 id를 채번한다"로 변경하고, "DB에서 읽은 엔티티는 저장된 id를 유지한다" 추가. 테스트 전용 엔티티(TestBaseEntity)도 같은 방식으로 변경
+
+## 테스트
+
+TDD: 테스트를 먼저 바꿔 빨간 상태를 확인한 뒤 구현.
+
+- EntityRulesTest: @Table을 붙이지 않는 규칙(실제 엔티티 검사, 검사 로직 검증용 테스트 전용 클래스 TableAnnotatedEntity) 추가. 기존 Builder 규칙은 create()의 @Builder가 만드는 `{클래스명}Builder` 클래스로도 통과
+- MemberEntitiesTest: 외부 Builder도 create()를 거쳐 회원의 이미지 목록에 등록되는지, 외부 Builder로도 자기 팔로우 검사를 우회할 수 없는지 2건 추가
+
+## 진행 중 발생한 문제
+
+1. 사용자가 중단한 명령이 일부 적용되어 있었음 (BaseEntityTest, EntityRulesTest, TableAnnotatedEntity). 이후 같은 수정을 다시 적용하려다 첫 단계에서 실패. 파일 상태를 확인하고 남은 부분(MemberEntitiesTest의 Builder 테스트)만 적용
+2. 변환 스크립트가 포매터가 여러 줄로 나눈 @OneToMany(Menu.children)를 매칭하지 못해 @Builder.Default가 빠짐. 빌드의 Lombok 경고("@Builder will ignore the initializing expression")와 테스트 2건 실패로 발견하여 수정. 이후 src/main의 모든 List 필드에 @Builder.Default가 있는지 확인
+
+## 검증 결과
+
+- ./gradlew build 통과, Lombok 경고 없음
+- 테스트 86건 모두 통과 (member-domain 74건, member-api 12건)
+
+## 컨벤션 문서와의 차이
+
+- 컨벤션의 Entity 예시는 private 생성자를 new로 호출하는 방식임. 이번 결정(create()가 Builder로 생성하고 외부용 Builder도 create()를 거침)과 다르므로 문서를 맞출지는 미정 (문서는 수정하지 않음)
+
+---
+
+# 7단계. 엔티티 DTO
+
+## 결정 사항
+
+- 상위 id를 일반 필드로도 두지 않음. 컨벤션 그대로 "하위 DTO만 포함하고 상위는 전혀 포함하지 않는다"로 하고, 상위가 필요하면 조회 쪽에서 해결함 (약관에서 선택 항목을 펼쳐 보거나, 선택 항목을 조회해 얻은 id로 상위 약관을 다시 조회). 따라서 MemberAgreementDto는 어느 약관인지 담지 않음
+- 참조만 하는 관계는 기본안으로 진행: 참조 대상의 DTO를 자신의 하위 컬렉션을 null로 둔 상태로 담음. 사용해 보고 별로면 수정하기로 함
+
+## 구현 내용
+
+member-domain의 각 패키지 command/dto에 엔티티와 1:1인 DTO 12개. 형식은 `record` + `@Builder(toBuilder = true)`이고 변환은 정적 팩토리 `from(Entity)`가 `builder()`로 조립. 컬렉션은 stream으로 변환.
+
+| 패키지 | DTO | 하위 DTO 컬렉션 | 참조 대상 (하위 컬렉션 null) |
+|---|---|---|---|
+| member | MemberDto | images, suspensions, authorities, agreements | |
+| member | MemberImageDto, MemberSuspensionDto | 없음 | |
+| member | FollowDto | 없음 | follower, followee (MemberDto) |
+| authority | AuthorityDto | permissions | |
+| authority | PermissionDto | actions | menu (MenuDto) |
+| authority | PermissionActionDto | 없음 | |
+| authority | MenuDto | children (부모는 포함하지 않음) | |
+| authority | MemberAuthorityDto | 없음 | authority (AuthorityDto) |
+| agreement | AgreementDto | answers | |
+| agreement | AgreementAnswerDto | 없음 | |
+| agreement | MemberAgreementDto | 없음 | agreementAnswer (AgreementAnswerDto) |
+
+- 모든 DTO에 id와 공통 일시(createdAt, modifiedAt, deletedAt)를 포함
+- 하위 DTO에는 상위 필드가 없음 (MemberImageDto에 member, memberId 없음 등)
+- `fromWithoutChildren(Entity)`: MemberDto, AuthorityDto, MenuDto에 추가. 엔티티의 지연 로딩 컬렉션을 읽지 않고 하위 컬렉션을 null로 둠. 참조 관계에서 사용하며 `from()`이 이를 재사용(`fromWithoutChildren(entity).toBuilder().children(...)`)
+- from()은 지연 로딩 컬렉션을 읽으므로 트랜잭션 안에서 호출해야 함. 이 내용을 Javadoc에 기록
+
+## 테스트
+
+TDD: 테스트를 먼저 작성하여 DTO 클래스가 없어 컴파일에 실패하는 것을 확인한 뒤 구현.
+
+- MemberDtosTest 7건: 필드와 소유한 하위 DTO 매핑(DB 미사용), 공통 일시 복사, 하위 DTO에 상위 필드 없음, 지연 로딩 컬렉션을 트랜잭션 안에서 변환하면 하위 DTO까지 채워짐, fromWithoutChildren은 컬렉션이 null이고 엔티티의 컬렉션을 로딩하지 않음(Hibernate.isInitialized로 확인), FollowDto의 follower와 followee는 하위 컬렉션이 null이고 로딩되지 않음, toBuilder 복사
+- AuthorityDtosTest 5건: 권한 DTO의 permission과 action 매핑과 메뉴는 하위 메뉴가 null, 메뉴 DTO는 하위 메뉴만 포함하고 부모는 필드에 없음, 메뉴 fromWithoutChildren, 하위 DTO에 상위 필드 없음, 회원 권한 DTO의 권한은 permissions가 null이고 로딩되지 않음(회원 DTO 변환 시)
+- AgreementDtosTest 4건: 약관과 선택 항목 매핑, 선택 항목과 동의 이력 DTO에 상위 필드 없음, 동의 이력 DTO의 선택 항목 매핑, soft delete된 선택 항목은 DTO에서도 제외
+- DtoRulesTest 4건 (규칙 테스트): 모든 DTO가 record이고 이름이 Dto로 끝남, 엔티티와 DTO가 정확히 1:1(이름 집합 비교), 모든 DTO가 `from(Entity)`와 `toBuilder()`와 Builder 클래스를 가짐, 엔티티에 DTO 변환 메소드가 없음. 새 엔티티에 DTO를 빠뜨리면 실패
+
+## 진행 중 발생한 문제
+
+- DtoRulesTest의 스캔 필터(`.*\.command\.dto\..*`)가 같은 패키지에 있는 테스트 클래스(MemberDtosTest 등)까지 DTO로 잡아 3건이 실패. 필터를 이름이 Dto로 끝나는 클래스(`.*\.command\.dto\.\w+Dto`)로 좁혀 해결
+
+## 검증 결과
+
+- ./gradlew build 통과
+- 테스트 106건 모두 통과 (member-domain 94건, member-api 12건)
+
+## 커밋 단위 제안
+
+- 6단계 후속 변경(엔티티 생성 방식)과 7단계(DTO)를 각각 별도 커밋으로 나누는 것을 제안. 파일 수가 많음
+
+---
+
+# 8단계. DDL과 엔티티 정합성 검증
+
+## 이미 확인되고 있던 것
+
+- ddl-auto=validate: 모든 엔티티 테스트(@JpaEntityTest)가 docs/db의 DDL이 적용된 Postgres에서 validate로 실행되므로 엔티티 매핑이 DDL과 어긋나면 컨텍스트가 뜨지 않음 (6단계)
+- unique, 자기 팔로우 CHECK, 외래키 CASCADE와 RESTRICT: DdlScriptTest(SQL 수준)와 엔티티 테스트(엔티티 수준)에서 확인
+- 삭제된 행을 네이티브 쿼리로 조회: BaseEntityTest와 MemberEntitiesTest에서 확인
+
+## 추가한 검증
+
+ddl-auto=validate는 컬럼 타입만 비교하므로 아래를 잡지 못함: NOT NULL 여부, DDL에만 있는 컬럼, 엔티티가 매핑하지 않은 컬럼. 이를 보완하는 EntityMappingTest(3건)를 추가. Hibernate가 실제로 매핑한 정보(SessionFactoryImplementor의 매핑 메타모델)와 DDL(information_schema)을 비교.
+
+- entityTablesMatchDdlTables: 엔티티가 매핑한 테이블 목록이 DDL의 테이블 목록(12개)과 같음
+- entityColumnsMatchDdlColumns: 테이블마다 엔티티의 컬럼 목록이 DDL의 컬럼 목록과 같음
+- entityNullabilityMatchesDdl: 컬럼마다 엔티티의 NULL 허용 여부가 DDL과 같음
+
+결과: 세 가지 모두 일치. 실제 엔티티와 DDL 사이에 불일치는 발견되지 않음.
+
+## 진행 중 발생한 문제
+
+- NULL 허용 여부 테스트가 처음에 `agreement.id`가 NULL 허용이라고 실패. 실제 불일치가 아니라 테스트의 오류였음: @OneToMany 컬렉션 속성의 "컬럼"을 조회하면 Hibernate가 소유자의 id 컬럼을 돌려주어 식별자 컬럼의 NOT NULL을 덮어씀. 컬렉션 속성(`isCollectionType()`)을 건너뛰도록 수정
+- 검사가 빈 검사가 아닌지 확인: 일부러 Member.nickname의 `nullable`을 틀리게(true) 바꿔서 실행하자 `member.nickname 의 NULL 허용 여부`로 정확히 실패하는 것을 확인한 뒤 원래 코드로 되돌림 (되돌린 뒤 빌드 통과 확인)
+- 테스트 컴파일 시 Hibernate의 deprecated API(AbstractEntityPersister) 사용 안내가 나옴. 테스트 코드이고 경고만 나오므로 그대로 둠
+
+## 검증 결과
+
+- EntityMappingTest 3건 통과
+- 계획의 8단계 항목(validate, unique, 자기 팔로우 CHECK, CASCADE, menu 부모 FK RESTRICT, 삭제된 행의 네이티브 조회) 모두 테스트로 확인됨
+
+---
+
+# 9단계. 최종 점검
+
+## 점검 내용
+
+- `./gradlew spotlessApply` 적용 후 `./gradlew clean build` 통과 (spotlessCheck 포함)
+- 테스트 109건 모두 통과, 건너뛴 테스트 없음, 경고 없음
+  - member-domain 97건: DdlScriptTest 23건, BaseEntityTest 16건, MemberEntitiesTest 15건, AuthorityEntitiesTest 5건, AgreementEntitiesTest 5건, EnumValuesTest 4건, EntityRulesTest 6건, DtoRulesTest 4건, EntityMappingTest 3건, MemberDtosTest 7건, AuthorityDtosTest 5건, AgreementDtosTest 4건
+  - member-api 12건: ChoimoryDevMemberApiApplicationTests 1건, JpaConfigTest 3건, LocalProfileSqlInitContextTest 2건, SqlInitProfileTest 6건
+
+## 계획 대비 완료 상태
+
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| 0 | 시작 준비 (calendar TASK, RedisConfigTest 삭제) | 완료 |
+| 1 | Gradle 멀티 모듈 전환 | 완료 |
+| 2 | 패키지 골격, 스캔 설정, 설정 파일 정리 | 완료 (package-info.java는 이후 삭제) |
+| 3 | DDL 작성과 id 타입 검증 (varchar(36) 확정) | 완료 |
+| 4 | BaseEntity | 완료 (@SQLRestriction 상속 안 됨 확인 후 엔티티마다 선언) |
+| 5 | enum | 완료 (PermissionAction enum은 PermissionActionType으로 변경) |
+| 6 | 엔티티 12개 (+ 후속: 생성 방식 정리) | 완료 |
+| 7 | 엔티티 DTO 12개 | 완료 |
+| 8 | DDL과 엔티티 정합성 검증 | 완료 |
+| 9 | 최종 점검 | 완료 |
+
+## 남은 것
+
+- "작업 마무리" 지시 시 진행할 것: done1.md 작성, calendar.md를 TASK에서 DONE으로 변경, README.md 갱신 (README는 삭제 전 구조를 설명하고 있어 전면 갱신 필요)
+- 컨벤션 문서(code-convention-springboot.md)의 Entity 예시를 이번에 정한 생성 방식(create()가 Builder로 생성하고 외부용 Builder도 create()를 거침)에 맞출지 미정 (문서는 수정하지 않음)
+- DDL의 COMMENT를 각 create table 바로 아래로 옮길지 미정 (Postgres는 컬럼 옆에 인라인 COMMENT를 쓸 수 없고 별도 COMMENT ON 문이 필요하며, 지금은 파일 맨 아래에 모아 둔 상태)
+- plan1.md~plan4.md의 기존 본문에는 결정이 바뀐 부분(uuid 타입, QueryDSL, AgreementType, member-model 등)이 남아 있으며 규칙상 수정하지 않았고, 각 문서 후반부에 변경 경위가 기록되어 있음
+
+## 커밋 단위 제안
+
+1. 0~1단계: 멀티 모듈 전환, RedisConfigTest 삭제, calendar 변경
+2. 2~3단계: 설정 파일 정리, DDL
+3. 4~5단계: BaseEntity, enum, modifyOnCreate
+4. 6단계: 엔티티와 후속 변경(생성 방식)
+5. 7~8단계: DTO, 정합성 테스트
+
+---
+
+# 엔티티 create() 제거와 클래스 레벨 Builder 전환
+
+> 그냥 엔티티 create 없애고 builder도 클래스에만 놓고 tobuilder true로 하자 컨벤션대로
+
+> 진행해줘 add 편의메소드는 유지
+
+> tobuilder 빼고 ㄱㄱ
+
+위 "6단계 후속 변경"의 B안(create()에 @Builder)을 대체함. 엔티티 생성은 컨벤션대로 클래스 레벨 Builder만 사용함. toBuilder는 논의 후 쓰지 않기로 함. (엔티티의 toBuilder()는 id와 공통 일시를 복사하지 않아 새 엔티티가 만들어지므로 수정 용도로 쓸 수 없음)
+
+## 변경 내용
+
+- 엔티티 11개(BaseEntity 제외 구체 엔티티 전부)에서 create() 정적 팩토리와 private Builder(initBuilder, XInit) 제거
+- `@Builder`를 클래스 레벨에 기본 접근 수준(public)으로 부여, `@AllArgsConstructor(PRIVATE)`와 `@NoArgsConstructor(PROTECTED)`는 유지, 컬렉션 필드의 `@Builder.Default`도 유지
+- 부모의 add 편의 메소드(addImage, addSuspension, addAuthority, addAgreement, addPermission, addAction, addAnswer, addChild)는 유지하되 등록한 자식을 반환하도록 변경
+  - 사용 예: `member.addImage(MemberImage.builder().member(member)...build())`
+- 사라진 동작
+  - 부모 컬렉션 자동 등록: Builder만으로는 등록되지 않으며 add 메소드를 직접 호출해야 함
+  - 자기 팔로우 검사(Follow.create): 엔티티에서 제거. Service에서 검증하도록 두고 DB의 CHECK가 마지막 방어선
+
+## 테스트 변경
+
+- EntityRulesTest: "정적 create() 없음" 규칙과 검출 로직 확인 테스트 추가 (6건에서 8건). 클래스 레벨 Builder 규칙(`{Name}Builder` 존재)은 그대로
+- 테스트와 EntityFixtures의 `X.create(...)` 호출을 Builder 호출로 변환 (부모가 있는 자식은 `parent.addX(...)`로 감쌈)
+- MemberEntitiesTest (15건에서 14건)
+  - builderGoesThroughCreateAndRegistersToParent를 builderDoesNotRegisterToParentUntilAdded로 변경 (Builder만으로는 등록되지 않고 addImage()를 호출하면 등록됨)
+  - followRequiresDifferentMembers와 builderCannotBypassSelfFollowRule을 selfFollowIsRejectedByDatabaseCheck 하나로 통합 (DB CHECK가 거부하는지 확인)
+
+## 검증 결과
+
+- `./gradlew spotlessApply` 후 `./gradlew clean build` 통과, 테스트 110건 모두 통과 (member-domain 98건, member-api 12건)
+- 이 변경으로 위 "9단계. 최종 점검"의 테스트 수(109건)와 "남은 것"의 컨벤션 Entity 예시 항목(create()가 Builder로 생성하는 방식 기준)은 달라짐. 컨벤션 문서는 수정하지 않았고, 엔티티 생성 방식이 컨벤션과 같아졌으므로 예시와의 차이는 거의 없음
