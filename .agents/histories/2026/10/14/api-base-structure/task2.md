@@ -2,6 +2,7 @@
 
 - [개요](#개요)
 - [공용 응답과 예외 핸들러 구현](#공용-응답과-예외-핸들러-구현)
+- [예외 핸들러 수정](#예외-핸들러-수정)
 
 ---
 
@@ -72,5 +73,42 @@
 
 - `spotlessApply`를 실행해 포맷을 적용했다.
 - 위 테스트 14개와 `DtoRulesTest` 4개를 실행해 모두 통과했다. (전체 테스트는 실행하지 않았다)
+
+---
+
+# 예외 핸들러 수정
+
+> 1,2번 반영해줘
+
+## 답변
+
+- 앞서 짚은 수정 후보 두 가지(`Exception`과 `RuntimeException` 핸들러 중복, 500 응답의 `e.getMessage()` 노출)를 `CommonExceptionHandler`에 반영했다.
+
+## 변경 내용
+
+### RuntimeException 핸들러 제거
+
+- `RuntimeException`은 `Exception`의 하위 타입이라 `Exception` 핸들러가 처리하므로 별도 핸들러를 제거했다.
+- `CommonException`은 `RuntimeException`의 하위 타입이지만, Spring은 가장 가까운 타입의 핸들러를 선택하므로 `CommonException` 핸들러가 우선한다. 동작은 달라지지 않는다.
+
+### 500 응답에서 예외 메시지 제거
+
+- `Exception` 핸들러는 응답 `data`에 `e.getMessage()`를 넣지 않는다. 예외는 로그로만 남기고, 응답은 `code`, `name`, `message`만 내려간다.
+- DB 오류나 내부 클래스 정보 같은 내부 메시지가 클라이언트에 노출되는 것을 막기 위함이다.
+- 핸들러의 Doc Comment에 이 의도를 적었다.
+
+### 유지한 부분
+
+- `AuthenticationException` 핸들러는 `data`에 `e.getMessage()`를 넣는 방식을 그대로 두었다. (수정 여부는 추후 결정)
+
+## 테스트 수정
+
+- 500 응답 테스트 2개(`Exception`, `RuntimeException`)의 기대값을 `data`가 없는 것으로 바꿨다.
+- `RuntimeException` 테스트는 `Exception` 핸들러를 거쳐 500이 나오며 예외 메시지를 노출하지 않는 것을 확인한다.
+
+## 검증
+
+- `spotlessApply`를 실행하고 `CommonExceptionHandlerTest` 7개, `CommonExceptionTest` 2개를 실행해 모두 통과했다. (전체 테스트는 실행하지 않았다)
+- 위 "공용 응답과 예외 핸들러 구현" 섹션의 핸들러 표(`Exception`, `RuntimeException`의 `data`에 예외 메시지)는 수정 전 상태를 기록한 것이다.
 
 ---

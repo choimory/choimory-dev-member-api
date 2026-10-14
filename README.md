@@ -4,8 +4,8 @@
 
 - Choimory 개발 회원 API 프로젝트다.
 - Java 21 기반 Spring Boot 회원 서버이며 Gradle 멀티 모듈로 구성한다.
-- 현재는 회원 도메인의 DB 설계(DDL)와 엔티티, DTO, enum까지 구현된 상태이며, 레포지토리, 서비스, 컨트롤러 등 API는 이후 `member-api`에 구현한다.
-- 작업 히스토리는 `.agents/histories`를 참고한다. (DB 설계와 구현: `.agents/histories/2026/02/17/modeling`)
+- 현재는 회원 도메인의 DB 설계(DDL)와 엔티티, DTO, enum, `member-api`의 도메인별 API 기본 구조(클래스와 필드만, 메소드 없음), 공통 응답과 예외 핸들러까지 구현된 상태이며, API 메소드는 이후 구현한다.
+- 작업 히스토리는 `.agents/histories`를 참고한다. (DB 설계와 구현: `.agents/histories/2026/02/17/modeling`, API 기본 구조와 공통 응답, 예외: `.agents/histories/2026/10/14/api-base-structure`)
 
 ## 기술 구성
 
@@ -37,6 +37,7 @@
 ├── member-domain                 # 엔티티, DTO, enum (API 모듈과 분리된 도메인 모듈)
 │   └── src/main/java/dev/choimory/member/domain
 │       ├── common/command/entity     # BaseEntity
+│       ├── common/command/response   # CommonResponse, CommonValidateResult
 │       ├── member/command/{entity,dto,type}
 │       ├── authority/command/{entity,dto,type}
 │       └── agreement/command/{entity,dto}
@@ -44,7 +45,9 @@
     └── src/main
         ├── java/dev/choimory/member/api
         │   ├── ChoimoryDevMemberApiApplication.java
-        │   └── config/JpaConfig.java
+        │   ├── config/JpaConfig.java
+        │   ├── common/exception          # CommonException, CommonExceptionHandler
+        │   └── {member,authority,agreement,menu}/v1/{command,query}/{controller,service,handler,repository}
         └── resources
             ├── application.yml, application-datasource.yml
             └── application-{local,dev,prod}.yml
@@ -102,6 +105,26 @@
 - 참조만 하는 관계는 `fromWithoutChildren`으로 변환해 하위 컬렉션을 건드리지 않는다.
 - 지연 로딩 컬렉션을 읽으므로 트랜잭션 안에서 변환한다.
 
+## API 구조
+
+- 도메인은 `member`, `authority`, `agreement`, `menu` 4개이며, 패키지는 `dev.choimory.member.api.{domain}.v1.{command|query}.{controller|service|handler|repository}`다.
+- 클래스 이름은 Controller, Service, Handler가 `{Domain}{Command|Query}{Layer}`(예: `MenuQueryController`), Repository가 `{Domain}Repository`다. command와 query의 Handler 이름이 같으면 Spring 빈 이름이 충돌하므로 Command, Query를 구분해 붙인다.
+- 요청 주소는 Controller 클래스의 `@RequestMapping("/v1/{domain}")`이며, command와 query Controller가 같은 기본 주소를 쓴다.
+- 주입 관계는 Controller → Service → Handler → Repository이며 `@RequiredArgsConstructor`와 `private final` 필드로 생성자 주입한다. Handler는 자기 도메인의 Repository만 주입받는다.
+- command Repository는 루트 엔티티(Member, Authority, Agreement, Menu)마다 `JpaRepository<엔티티, String>`으로 두고, 필요하면 추가한다.
+- query Repository 패키지는 비어 있으며(`.gitkeep`) Elasticsearch 조회로 구현할 예정이다. query Handler는 Repository 없이 클래스만 있다.
+- 현재는 클래스와 필드만 있고 메소드는 없다.
+
+## 공통 응답과 예외
+
+- `CommonResponse<T>`(`code`, `name`, `message`, `data`)와 `CommonValidateResult`(`field`, `rejectValue`, `message`)는 `member-domain`의 `common/command/response`에 record로 있다. (`command/dto`는 Entity와 1:1 DTO 전용이라 `DtoRulesTest`가 검사한다)
+- `CommonException`(HTTP 상태, 응답 코드, 코드명, 메시지)과 `CommonExceptionHandler`는 `member-api`의 `common.exception`에 있다.
+- `CommonExceptionHandler`는 `@RestControllerAdvice("dev.choimory")`이며 다음을 처리한다.
+  - `CommonException`: 예외에 지정된 상태와 값
+  - `MethodArgumentNotValidException`, `ConstraintViolationException`: 400, `data`에 `CommonValidateResult` 목록
+  - `AuthenticationException`: 401, `data`에 예외 메시지
+  - 그 외 `Exception`: 500, 예외는 로그로만 남기고 응답에 메시지를 담지 않는다.
+
 ## DB와 실행 환경
 
 - PostgreSQL을 사용한다. 연결 정보는 `application-datasource.yml`의 환경변수(`rdb-host`, `rdb-port`, `rdb-database`, `rdb-user`, `rdb-password`)로 받는다.
@@ -129,6 +152,8 @@
   - `DtoRulesTest`, `*DtosTest`: DTO 규칙과 변환
   - `EntityMappingTest`: 엔티티 매핑과 DDL 컬럼 일치
   - `EnumValuesTest`: enum 값과 DDL check 일치
+  - `CommonResponseTest`, `CommonValidateResultTest`: 공통 응답 객체
+  - `CommonExceptionTest`, `CommonExceptionHandlerTest`(member-api): 공통 예외와 예외별 응답. 예외를 던지는 테스트용 컨트롤러와 standalone MockMvc를 사용하며 Docker가 필요 없다.
 - JPA 테스트는 `@JpaEntityTest`를 사용하며, Auditing은 `JpaAuditingTestConfiguration`을 import한 테스트에서만 켠다. (테스트 앱에 `@EnableJpaAuditing`을 두면 `@JdbcTest`가 깨진다)
 
 ## 검증과 코드 포맷

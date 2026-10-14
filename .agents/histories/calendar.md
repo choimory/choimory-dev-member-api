@@ -4,4 +4,4 @@
 - 2026-08-08: DONE:Kotlin Java21 변환작업(kotlin-to-java21-migration)
 - 2026-09-16: DONE:Java 21 IDE 실행 설정 수정(java21-ide-run-config-fix)
 - 2026-09-17: DONE:final class record 변환작업(final-class-to-record)
-- 2026-10-14: TASK:API 기본 구조 작성(api-base-structure)
+- 2026-10-14: DONE:API 기본 구조 작성(api-base-structure)

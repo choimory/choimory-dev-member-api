@@ -54,11 +54,11 @@ class CommonExceptionHandlerTest {
                 .andExpect(jsonPath("$.code").value(500))
                 .andExpect(jsonPath("$.name").value("INTERNAL_SERVER_ERROR"))
                 .andExpect(jsonPath("$.message").value("Internal Server Error"))
-                .andExpect(jsonPath("$.data").value("checked"));
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 
     /**
-     * RuntimeException은 500 응답으로 변환됩니다.
+     * RuntimeException은 Exception 핸들러를 거쳐 500 응답으로 변환되며 예외 메시지를 노출하지 않습니다.
      *
      * @throws Exception MockMvc 수행 중 발생
      */
@@ -68,7 +68,7 @@ class CommonExceptionHandlerTest {
         mockMvc.perform(get("/runtime"))
                 .andExpect(status().isInternalServerError())
                 .andExpect(jsonPath("$.code").value(500))
-                .andExpect(jsonPath("$.data").value("runtime"));
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 
     /**

@@ -22,6 +22,7 @@ public class CommonExceptionHandler {
 
     /**
      * 처리되지 않은 일반 예외를 내부 서버 오류 응답으로 변환합니다.
+     * 내부 정보 노출을 막기 위해 예외 메시지는 응답에 담지 않고 로그로만 남깁니다.
      *
      * @param e 일반 예외
      * @return 공통 오류 응답
@@ -36,28 +37,7 @@ public class CommonExceptionHandler {
         return new CommonResponse<>(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.name(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                e.getMessage());
-    }
-
-    /**
-     * RuntimeException을 내부 서버 오류 응답으로 변환합니다.
-     *
-     * @param e 런타임 예외
-     * @return 공통 오류 응답
-     */
-    @ExceptionHandler(RuntimeException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public CommonResponse<String> runtimeException(RuntimeException e) {
-        // 예외를 로그로 남긴다.
-        log.error("Runtime exception", e);
-
-        // 내부 서버 오류 응답으로 변환한다.
-        return new CommonResponse<>(
-                HttpStatus.INTERNAL_SERVER_ERROR.value(),
-                HttpStatus.INTERNAL_SERVER_ERROR.name(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase(),
-                e.getMessage());
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
     }
 
     /**
