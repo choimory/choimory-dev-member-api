@@ -13,15 +13,6 @@ spring:
         show_sql: true
         format_sql: true
 
-  # local 프로필에서만 docs/db의 DDL을 실행한다. (dev, prod에서는 절대 실행하지 않는다)
-  # DDL은 앱이 뜰 때마다 실행되므로 여러 번 실행해도 안전하게(멱등) 작성해야 한다.
-  # Spring은 내용이 없는 SQL 스크립트를 오류로 처리하므로, DML(choimory-dev-member-dml-v1.sql)은
-  # 초기 데이터가 생겨 내용이 채워질 때 data-locations로 추가한다.
-  sql:
-    init:
-      mode: always
-      schema-locations: classpath:/sql/v1/choimory-dev-member-ddl-v1.sql
-
 logging:
   level:
     root: info
