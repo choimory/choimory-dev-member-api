@@ -1,0 +1,13 @@
+# local, dev, prod 프로필에서 docs/flyway의 마이그레이션 SQL을 앱 기동 시 실행한다.
+# SQL은 빌드 시 클래스패스 db/migration 아래로 복사된다. (하위 디렉토리까지 재귀로 스캔)
+# 이미 적용된 버전은 수정할 수 없으며(체크섬 검증), 변경은 새 버전 파일(V2 이후)로 추가한다.
+spring:
+  config:
+    activate:
+      on-profile: flyway
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    validate-on-migrate: true
+    clean-disabled: true

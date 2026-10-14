@@ -24,9 +24,9 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-// 테스트에서 docs/db의 DDL을 Postgres 컨테이너에 적용하기 위해 경로를 전달한다.
+// 테스트에서 docs/flyway의 마이그레이션 SQL을 Postgres 컨테이너에 적용하기 위해 경로를 전달한다.
 tasks.named('test') {
-    def ddlFile = file("${rootDir}/docs/db/v1/choimory-dev-member-ddl-v1.sql")
-    inputs.file(ddlFile)
-    systemProperty 'docs.db.ddl', ddlFile.absolutePath
+    def migrationDir = file("${rootDir}/docs/flyway")
+    inputs.dir(migrationDir)
+    systemProperty 'docs.flyway.dir', migrationDir.absolutePath
 }

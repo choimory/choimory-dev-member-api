@@ -1,39 +1,48 @@
 package dev.choimory.member.api.config;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
 
 import dev.choimory.member.api.TestcontainersConfiguration;
 import java.util.List;
-import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.springframework.test.context.ActiveProfiles;
 
 /**
- * local 프로필에서 앱이 뜰 때 SQL 초기화가 docs/db의 DDL을 실제로 실행하는지 확인하는 테스트입니다.
+ * 앱이 뜰 때 Flyway가 docs/flyway의 마이그레이션을 실제로 적용하는지 확인하는 테스트입니다.
+ * ddl-auto=validate로 실행하므로 엔티티 매핑과 마이그레이션으로 만들어진 스키마가 일치하는지도 함께 검증합니다.
  */
 @Import(TestcontainersConfiguration.class)
-@SpringBootTest
+@SpringBootTest(properties = "spring.jpa.hibernate.ddl-auto=validate")
 @ActiveProfiles("local")
-class LocalProfileSqlInitContextTest {
+class FlywayMigrationTest {
 
     @Autowired
     private JdbcTemplate jdbc; // JDBC 템플릿
 
-    @Autowired
-    private DataSource dataSource; // 데이터 소스
-
     /**
-     * 앱이 뜨는 시점에 SQL 초기화로 DDL의 테이블이 생성되었는지 확인합니다.
+     * Flyway 이력에 V1이 성공으로 기록되었는지 확인합니다.
      */
     @Test
-    void ddlIsAppliedOnStartup() {
+    void initSchemaIsRecordedAsSuccess() {
+        // 성공한 마이그레이션 이력을 버전 순으로 조회한다.
+        List<String> versions = jdbc.queryForList(
+                "select version from flyway_schema_history where success = true and version is not null"
+                        + " order by installed_rank",
+                String.class);
+
+        // V1이 첫 번째로 적용되어 있어야 한다.
+        assertThat(versions).startsWith("1");
+    }
+
+    /**
+     * 마이그레이션으로 DDL의 테이블이 모두 생성되었는지 확인합니다.
+     */
+    @Test
+    void migrationCreatesAllTables() {
         // 현재 스키마의 테이블 이름을 조회한다.
         List<String> names = jdbc.queryForList(
                 "select table_name from information_schema.tables where table_schema = current_schema()", String.class);
@@ -53,18 +62,5 @@ class LocalProfileSqlInitContextTest {
                         "menu",
                         "agreement",
                         "agreement_answer");
-    }
-
-    /**
-     * 이미 DDL이 적용된 상태에서 앱이 다시 떠도 오류가 없도록 DDL을 다시 실행해도 안전한지 확인합니다.
-     */
-    @Test
-    void ddlCanBeAppliedAgain() {
-        // 클래스패스로 복사된 DDL을 다시 실행한다.
-        ResourceDatabasePopulator populator =
-                new ResourceDatabasePopulator(new ClassPathResource("sql/v1/choimory-dev-member-ddl-v1.sql"));
-
-        // 오류 없이 실행되어야 한다.
-        assertThatCode(() -> populator.execute(dataSource)).doesNotThrowAnyException();
     }
 }

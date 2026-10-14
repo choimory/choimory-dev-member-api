@@ -8,10 +8,10 @@ spring:
     profiles:
         include: datasource
         group:
-            default: prod
-            prod: prod
-            dev: dev
-            local: local, sql-init
+            default: prod, flyway
+            prod: prod, flyway
+            dev: dev, flyway
+            local: local, flyway
 
     jpa:
         open-in-view: false

@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import dev.choimory.member.domain.MigrationScripts;
 import dev.choimory.member.domain.TestcontainersConfiguration;
 import java.util.List;
 import javax.sql.DataSource;
@@ -18,7 +19,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 /**
- * docs/db의 DDL 스크립트 테스트입니다.
+ * docs/flyway의 마이그레이션 SQL(DDL) 테스트입니다.
  * 테이블 구조, 제약조건, 외래키 삭제 동작을 SQL 수준에서 검증합니다.
  */
 @JdbcTest
@@ -132,13 +133,14 @@ class DdlScriptTest {
     }
 
     /**
-     * DDL을 여러 번 실행해도 오류가 없는지(멱등) 확인합니다.
+     * 마이그레이션 SQL을 이미 적용된 DB에 다시 실행해도 오류가 없는지(멱등) 확인합니다.
+     * Flyway는 적용된 버전을 다시 실행하지 않지만, V1은 기존 DDL이 적용된 DB에서도 안전하도록 멱등으로 유지합니다.
      */
     @Test
     void ddlIsIdempotent() {
-        // 이미 적용된 DDL을 두 번 더 실행한다.
-        ResourceDatabasePopulator populator =
-                new ResourceDatabasePopulator(new FileSystemResource(System.getProperty("docs.db.ddl")));
+        // 이미 적용된 마이그레이션 SQL을 버전 순으로 두 번 더 실행한다.
+        ResourceDatabasePopulator populator = new ResourceDatabasePopulator(
+                MigrationScripts.files().stream().map(FileSystemResource::new).toArray(FileSystemResource[]::new));
 
         // 오류 없이 실행되어야 한다.
         assertThatCode(() -> {
