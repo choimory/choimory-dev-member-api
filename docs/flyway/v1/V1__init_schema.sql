@@ -38,6 +38,17 @@ create table if not exists member
     constraint uk_member_nickname unique (nickname)
 );
 
+comment on table member is '회원';
+comment on column member.id is 'ID (UUID v7, 서버 채번)';
+comment on column member.email is '이메일 (soft delete 된 행까지 포함해 유일)';
+comment on column member.password is '암호화된 비밀번호';
+comment on column member.nickname is '닉네임 (soft delete 된 행까지 포함해 유일)';
+comment on column member.introduce is '자기소개';
+comment on column member.status is '회원 상태 (REGISTER, ACTIVATE, INACTIVATE, SUSPENDED)';
+comment on column member.created_at is '생성 일시';
+comment on column member.modified_at is '수정 일시';
+comment on column member.deleted_at is '삭제 일시 (soft delete)';
+
 -- ----------------------------------------------------------------------------
 -- member_image : 회원 이미지 (member 1:N)
 -- ----------------------------------------------------------------------------
@@ -62,6 +73,21 @@ create table if not exists member_image
 
 create index if not exists idx_member_image_member_id on member_image (member_id);
 
+comment on table member_image is '회원 이미지';
+comment on column member_image.id is 'ID (UUID v7, 서버 채번)';
+comment on column member_image.member_id is '회원 ID';
+comment on column member_image.type is '이미지 유형 (PROFILE)';
+comment on column member_image.path is '원본 이미지 저장 경로';
+comment on column member_image.name is '서버에서 변경해 저장한 원본 파일명';
+comment on column member_image.origin_file_name is '사용자가 첨부한 파일명';
+comment on column member_image.size is '원본 이미지 크기 (byte)';
+comment on column member_image.resize_file_path is '리사이즈 이미지 저장 경로';
+comment on column member_image.resize_file_name is '서버가 생성한 리사이즈 파일명';
+comment on column member_image.resize_file_size is '리사이즈 이미지 크기 (byte)';
+comment on column member_image.created_at is '생성 일시';
+comment on column member_image.modified_at is '수정 일시';
+comment on column member_image.deleted_at is '삭제 일시 (soft delete)';
+
 -- ----------------------------------------------------------------------------
 -- member_suspension : 회원 정지 이력 (member 1:N)
 -- ----------------------------------------------------------------------------
@@ -80,6 +106,16 @@ create table if not exists member_suspension
 );
 
 create index if not exists idx_member_suspension_member_id on member_suspension (member_id);
+
+comment on table member_suspension is '회원 정지 이력';
+comment on column member_suspension.id is 'ID (UUID v7, 서버 채번)';
+comment on column member_suspension.member_id is '회원 ID';
+comment on column member_suspension.suspended_at is '정지 시작 일시';
+comment on column member_suspension.suspended_to is '정지 종료 일시';
+comment on column member_suspension.reason is '정지 사유';
+comment on column member_suspension.created_at is '생성 일시';
+comment on column member_suspension.modified_at is '수정 일시';
+comment on column member_suspension.deleted_at is '삭제 일시 (soft delete)';
 
 -- ----------------------------------------------------------------------------
 -- follow : 팔로우 (member N:N member), hard delete
@@ -101,6 +137,14 @@ create table if not exists follow
 
 create index if not exists idx_follow_followee_id on follow (followee_id);
 
+comment on table follow is '팔로우 (hard delete, deleted_at 은 쓰지 않는다)';
+comment on column follow.id is 'ID (UUID v7, 서버 채번)';
+comment on column follow.follower_id is '팔로우하는 회원 ID';
+comment on column follow.followee_id is '팔로우 당하는 회원 ID';
+comment on column follow.created_at is '생성 일시';
+comment on column follow.modified_at is '수정 일시';
+comment on column follow.deleted_at is '삭제 일시 (공통 컬럼, 사용하지 않음)';
+
 -- ----------------------------------------------------------------------------
 -- authority : 권한
 -- ----------------------------------------------------------------------------
@@ -115,6 +159,14 @@ create table if not exists authority
     constraint pk_authority primary key (id),
     constraint uk_authority_code unique (code)
 );
+
+comment on table authority is '권한';
+comment on column authority.id is 'ID (UUID v7, 서버 채번)';
+comment on column authority.name is '권한명';
+comment on column authority.code is '권한 코드 (MEMBER, ADMIN, MODERATOR)';
+comment on column authority.created_at is '생성 일시';
+comment on column authority.modified_at is '수정 일시';
+comment on column authority.deleted_at is '삭제 일시 (soft delete)';
 
 -- ----------------------------------------------------------------------------
 -- menu : 메뉴 (자기참조 부모 메뉴, 하위 메뉴가 있으면 삭제할 수 없다)
@@ -136,6 +188,16 @@ create table if not exists menu
 
 create index if not exists idx_menu_parent_menu_id on menu (parent_menu_id);
 
+comment on table menu is '메뉴';
+comment on column menu.id is 'ID (UUID v7, 서버 채번)';
+comment on column menu.parent_menu_id is '부모 메뉴 ID (최상위 메뉴는 null)';
+comment on column menu.name is '메뉴명';
+comment on column menu.code is '메뉴 코드 (유일)';
+comment on column menu.path is '메뉴 경로';
+comment on column menu.created_at is '생성 일시';
+comment on column menu.modified_at is '수정 일시';
+comment on column menu.deleted_at is '삭제 일시 (soft delete)';
+
 -- ----------------------------------------------------------------------------
 -- member_authority : 회원 권한 (member N:N authority)
 -- ----------------------------------------------------------------------------
@@ -154,6 +216,14 @@ create table if not exists member_authority
 );
 
 create index if not exists idx_member_authority_authority_id on member_authority (authority_id);
+
+comment on table member_authority is '회원 권한';
+comment on column member_authority.id is 'ID (UUID v7, 서버 채번)';
+comment on column member_authority.member_id is '회원 ID';
+comment on column member_authority.authority_id is '권한 ID';
+comment on column member_authority.created_at is '생성 일시';
+comment on column member_authority.modified_at is '수정 일시';
+comment on column member_authority.deleted_at is '삭제 일시 (soft delete)';
 
 -- ----------------------------------------------------------------------------
 -- permission : 권한별 메뉴 접근 (authority N:N menu)
@@ -174,6 +244,14 @@ create table if not exists permission
 
 create index if not exists idx_permission_menu_id on permission (menu_id);
 
+comment on table permission is '권한별 메뉴 접근';
+comment on column permission.id is 'ID (UUID v7, 서버 채번)';
+comment on column permission.authority_id is '권한 ID';
+comment on column permission.menu_id is '메뉴 ID';
+comment on column permission.created_at is '생성 일시';
+comment on column permission.modified_at is '수정 일시';
+comment on column permission.deleted_at is '삭제 일시 (soft delete)';
+
 -- ----------------------------------------------------------------------------
 -- permission_action : permission 에 허용된 액션 (permission 1:N)
 -- ----------------------------------------------------------------------------
@@ -190,6 +268,14 @@ create table if not exists permission_action
     constraint fk_permission_action_permission foreign key (permission_id) references permission (id) on delete cascade
 );
 
+comment on table permission_action is 'permission 에 허용된 액션';
+comment on column permission_action.id is 'ID (UUID v7, 서버 채번)';
+comment on column permission_action.permission_id is 'permission ID';
+comment on column permission_action.action is '허용된 액션 (CREATE, READ, UPDATE, DELETE)';
+comment on column permission_action.created_at is '생성 일시';
+comment on column permission_action.modified_at is '수정 일시';
+comment on column permission_action.deleted_at is '삭제 일시 (soft delete)';
+
 -- ----------------------------------------------------------------------------
 -- agreement : 약관 (수정하지 않고 추가 또는 soft delete 만 한다)
 -- ----------------------------------------------------------------------------
@@ -204,6 +290,15 @@ create table if not exists agreement
     deleted_at  timestamp,
     constraint pk_agreement primary key (id)
 );
+
+comment on table agreement is '약관 (수정하지 않고 추가 또는 soft delete 만 한다)';
+comment on column agreement.id is 'ID (UUID v7, 서버 채번)';
+comment on column agreement.title is '약관 제목';
+comment on column agreement.content is '약관 내용';
+comment on column agreement.is_multiple is '복수 선택 여부 (true 는 checkbox, false 는 radio)';
+comment on column agreement.created_at is '생성 일시';
+comment on column agreement.modified_at is '수정 일시';
+comment on column agreement.deleted_at is '삭제 일시 (soft delete)';
 
 -- ----------------------------------------------------------------------------
 -- agreement_answer : 약관의 선택 항목 (agreement 1:N)
@@ -222,6 +317,15 @@ create table if not exists agreement_answer
 );
 
 create index if not exists idx_agreement_answer_agreement_id on agreement_answer (agreement_id);
+
+comment on table agreement_answer is '약관의 선택 항목';
+comment on column agreement_answer.id is 'ID (UUID v7, 서버 채번)';
+comment on column agreement_answer.agreement_id is '약관 ID';
+comment on column agreement_answer.name is '선택 항목명';
+comment on column agreement_answer.is_positive is '긍정적인 답변 여부 (배치와 통계 쿼리용 참고 값)';
+comment on column agreement_answer.created_at is '생성 일시';
+comment on column agreement_answer.modified_at is '수정 일시';
+comment on column agreement_answer.deleted_at is '삭제 일시 (soft delete)';
 
 -- ----------------------------------------------------------------------------
 -- member_agreement : 회원이 선택한 약관 항목 (member N:N agreement_answer)
@@ -242,115 +346,6 @@ create table if not exists member_agreement
 );
 
 create index if not exists idx_member_agreement_agreement_answer_id on member_agreement (agreement_answer_id);
-
-
--- ============================================================================
--- COMMENT (COMMENT 문은 여러 번 실행해도 안전하다)
--- ============================================================================
-
-comment on table member is '회원';
-comment on column member.id is 'ID (UUID v7, 서버 채번)';
-comment on column member.email is '이메일 (soft delete 된 행까지 포함해 유일)';
-comment on column member.password is '암호화된 비밀번호';
-comment on column member.nickname is '닉네임 (soft delete 된 행까지 포함해 유일)';
-comment on column member.introduce is '자기소개';
-comment on column member.status is '회원 상태 (REGISTER, ACTIVATE, INACTIVATE, SUSPENDED)';
-comment on column member.created_at is '생성 일시';
-comment on column member.modified_at is '수정 일시';
-comment on column member.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table member_image is '회원 이미지';
-comment on column member_image.id is 'ID (UUID v7, 서버 채번)';
-comment on column member_image.member_id is '회원 ID';
-comment on column member_image.type is '이미지 유형 (PROFILE)';
-comment on column member_image.path is '원본 이미지 저장 경로';
-comment on column member_image.name is '서버에서 변경해 저장한 원본 파일명';
-comment on column member_image.origin_file_name is '사용자가 첨부한 파일명';
-comment on column member_image.size is '원본 이미지 크기 (byte)';
-comment on column member_image.resize_file_path is '리사이즈 이미지 저장 경로';
-comment on column member_image.resize_file_name is '서버가 생성한 리사이즈 파일명';
-comment on column member_image.resize_file_size is '리사이즈 이미지 크기 (byte)';
-comment on column member_image.created_at is '생성 일시';
-comment on column member_image.modified_at is '수정 일시';
-comment on column member_image.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table member_suspension is '회원 정지 이력';
-comment on column member_suspension.id is 'ID (UUID v7, 서버 채번)';
-comment on column member_suspension.member_id is '회원 ID';
-comment on column member_suspension.suspended_at is '정지 시작 일시';
-comment on column member_suspension.suspended_to is '정지 종료 일시';
-comment on column member_suspension.reason is '정지 사유';
-comment on column member_suspension.created_at is '생성 일시';
-comment on column member_suspension.modified_at is '수정 일시';
-comment on column member_suspension.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table follow is '팔로우 (hard delete, deleted_at 은 쓰지 않는다)';
-comment on column follow.id is 'ID (UUID v7, 서버 채번)';
-comment on column follow.follower_id is '팔로우하는 회원 ID';
-comment on column follow.followee_id is '팔로우 당하는 회원 ID';
-comment on column follow.created_at is '생성 일시';
-comment on column follow.modified_at is '수정 일시';
-comment on column follow.deleted_at is '삭제 일시 (공통 컬럼, 사용하지 않음)';
-
-comment on table authority is '권한';
-comment on column authority.id is 'ID (UUID v7, 서버 채번)';
-comment on column authority.name is '권한명';
-comment on column authority.code is '권한 코드 (MEMBER, ADMIN, MODERATOR)';
-comment on column authority.created_at is '생성 일시';
-comment on column authority.modified_at is '수정 일시';
-comment on column authority.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table menu is '메뉴';
-comment on column menu.id is 'ID (UUID v7, 서버 채번)';
-comment on column menu.parent_menu_id is '부모 메뉴 ID (최상위 메뉴는 null)';
-comment on column menu.name is '메뉴명';
-comment on column menu.code is '메뉴 코드 (유일)';
-comment on column menu.path is '메뉴 경로';
-comment on column menu.created_at is '생성 일시';
-comment on column menu.modified_at is '수정 일시';
-comment on column menu.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table member_authority is '회원 권한';
-comment on column member_authority.id is 'ID (UUID v7, 서버 채번)';
-comment on column member_authority.member_id is '회원 ID';
-comment on column member_authority.authority_id is '권한 ID';
-comment on column member_authority.created_at is '생성 일시';
-comment on column member_authority.modified_at is '수정 일시';
-comment on column member_authority.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table permission is '권한별 메뉴 접근';
-comment on column permission.id is 'ID (UUID v7, 서버 채번)';
-comment on column permission.authority_id is '권한 ID';
-comment on column permission.menu_id is '메뉴 ID';
-comment on column permission.created_at is '생성 일시';
-comment on column permission.modified_at is '수정 일시';
-comment on column permission.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table permission_action is 'permission 에 허용된 액션';
-comment on column permission_action.id is 'ID (UUID v7, 서버 채번)';
-comment on column permission_action.permission_id is 'permission ID';
-comment on column permission_action.action is '허용된 액션 (CREATE, READ, UPDATE, DELETE)';
-comment on column permission_action.created_at is '생성 일시';
-comment on column permission_action.modified_at is '수정 일시';
-comment on column permission_action.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table agreement is '약관 (수정하지 않고 추가 또는 soft delete 만 한다)';
-comment on column agreement.id is 'ID (UUID v7, 서버 채번)';
-comment on column agreement.title is '약관 제목';
-comment on column agreement.content is '약관 내용';
-comment on column agreement.is_multiple is '복수 선택 여부 (true 는 checkbox, false 는 radio)';
-comment on column agreement.created_at is '생성 일시';
-comment on column agreement.modified_at is '수정 일시';
-comment on column agreement.deleted_at is '삭제 일시 (soft delete)';
-
-comment on table agreement_answer is '약관의 선택 항목';
-comment on column agreement_answer.id is 'ID (UUID v7, 서버 채번)';
-comment on column agreement_answer.agreement_id is '약관 ID';
-comment on column agreement_answer.name is '선택 항목명';
-comment on column agreement_answer.is_positive is '긍정적인 답변 여부 (배치와 통계 쿼리용 참고 값)';
-comment on column agreement_answer.created_at is '생성 일시';
-comment on column agreement_answer.modified_at is '수정 일시';
-comment on column agreement_answer.deleted_at is '삭제 일시 (soft delete)';
 
 comment on table member_agreement is '회원이 선택한 약관 항목';
 comment on column member_agreement.id is 'ID (UUID v7, 서버 채번)';

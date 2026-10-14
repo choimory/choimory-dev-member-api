@@ -24,7 +24,7 @@
 
 ## 마이그레이션 파일
 
-- `docs/flyway/v1/V1__init_schema.sql`을 만들었다. 기존 `docs/db/v1/choimory-dev-member-ddl-v1.sql`을 복사한 것이다.
+- `docs/flyway/v1/V1__init_schema.sql`을 만들었다. 기존 `docs/db/v1/v1-choimory-dev-member-ddl.sql`을 복사한 것이다.
 - 헤더의 "local 프로필에서 앱이 뜰 때마다 실행되므로 멱등이어야 한다" 규칙을 Flyway 규칙으로 바꿨다.
   - 이미 적용된 버전은 수정하지 않고 변경은 V2 이후 새 파일로 추가한다. (수정하면 체크섬이 달라져 앱이 기동하지 않는다)
   - 기존 DDL이 적용된 DB에서도 안전하도록 `create ... if not exists`는 유지하고 DROP 문은 작성하지 않는다.

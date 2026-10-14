@@ -60,7 +60,7 @@
 
 - 단일 모듈이며 src/main에는 ChoimoryDevMemberApiApplication.java 하나만 남아 있음 (기존 소스는 f53eee6 커밋에서 제거됨)
 - build.gradle: Java 21, Spring Boot 3.5.4-SNAPSHOT, Spotless + Palantir Java Format, JPA, Security, Validation, Web, Elasticsearch, Redis, Postgres 드라이버, uuid-creator, Lombok, Testcontainers
-- docs/db/v1/choimory-dev-member-ddl-v1.sql, choimory-dev-member-dml-v1.sql은 비어 있음 (이전 docs/db/1.0.0에서 이름 변경됨)
+- docs/db/v1/v1-choimory-dev-member-ddl.sql, choimory-dev-member-dml-v1.sql은 비어 있음 (이전 docs/db/1.0.0에서 이름 변경됨)
 - src/main/resources/sql/schema.sql은 옛 member 테이블 정의이고 data.sql은 비어 있음. local 프로필이 sql-init 그룹으로 이 파일을 사용하도록 설정되어 있음
 - application.yml은 open-in-view false, ddl-auto none, generate-ddl false
 - src/test의 RedisConfigTest는 삭제된 클래스(RedisConfig, MemberEntityDto)를 참조하여 현재 컴파일되지 않음
@@ -106,7 +106,7 @@
 - @EntityScan("dev.choimory.member.domain")과 @EnableJpaRepositories 설정
 - 검증: 애플리케이션 컨텍스트 로딩 테스트 통과
 
-### 3단계. DDL SQL 작성 (docs/db/v1/choimory-dev-member-ddl-v1.sql)
+### 3단계. DDL SQL 작성 (docs/db/v1/v1-choimory-dev-member-ddl.sql)
 
 - DB2의 모든 테이블 작성. 공통 컬럼 id, created_at, modified_at, deleted_at
 - enum 컬럼은 varchar(CHECK 제약 없음). 허용 값은 주석으로 기록
@@ -118,7 +118,7 @@
   - permission_action: UNIQUE(permission_id, action)
   - 하위 테이블 FK는 ON DELETE CASCADE (member hard delete 시 일괄 삭제)
 - 테이블과 컬럼에 COMMENT 작성
-- DML(choimory-dev-member-dml-v1.sql)은 초기 데이터 범위가 정해지면 작성
+- DML(v1-choimory-dev-member-dml.sql)은 초기 데이터 범위가 정해지면 작성
 - 검증: Testcontainers Postgres에 실행하여 오류 없이 적용됨
 
 ### 4단계. BaseEntity (TDD)

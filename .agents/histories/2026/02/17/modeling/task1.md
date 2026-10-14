@@ -165,7 +165,7 @@
 
 - application-local.yml
   - spring.sql.init.mode: always (기존 embedded는 임베디드 DB에서만 동작하여 Postgres에서는 실행되지 않았음)
-  - spring.sql.init.schema-locations: classpath:/sql/v1/choimory-dev-member-ddl-v1.sql
+  - spring.sql.init.schema-locations: classpath:/sql/v1/v1-choimory-dev-member-ddl.sql
   - data-locations는 설정하지 않음 (아래 "계획과 달라진 점" 참고)
   - 앱이 뜰 때마다 실행되므로 DDL은 멱등하게 작성해야 한다는 주석을 남김
 - application-dev.yml, application-prod.yml은 변경하지 않음. dev, prod에서는 SQL 초기화가 동작하지 않음
@@ -254,7 +254,7 @@ String id를 Postgres uuid 컬럼에 쓸 수 있는지 member-domain 테스트 �
 
 ## DDL 작성 내용
 
-docs/db/v1/choimory-dev-member-ddl-v1.sql
+docs/db/v1/v1-choimory-dev-member-ddl.sql
 
 - DB2의 12개 테이블 작성: member, member_image, member_suspension, follow, authority, menu, member_authority, permission, permission_action, agreement, agreement_answer, member_agreement
 - 모든 테이블에 공통 컬럼 id, created_at, modified_at, deleted_at 포함 (follow도 deleted_at 유지)

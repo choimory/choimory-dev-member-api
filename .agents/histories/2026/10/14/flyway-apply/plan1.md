@@ -28,11 +28,11 @@
 
 ### 스키마 적용 방식
 
-- `docs/db/v1/choimory-dev-member-ddl-v1.sql` 하나(360줄, 테이블 12개, 멱등 `if not exists`)가 원본이다.
+- `docs/db/v1/v1-choimory-dev-member-ddl.sql` 하나(360줄, 테이블 12개, 멱등 `if not exists`)가 원본이다.
 - 빌드 시 `processResources`가 `docs/db`를 `member-api`의 classpath `sql/` 아래로 복사한다.
 - `local` 프로필의 `application-sql-init.yml`이 앱 기동 때마다 그 DDL을 실행한다.
 - dev와 prod는 스키마를 자동 생성하지 않는다. (`ddl-auto: none`)
-- DML(`choimory-dev-member-dml-v1.sql`)은 비어 있다.
+- DML(`v1-choimory-dev-member-dml.sql`)은 비어 있다.
 
 ### 테스트의 DDL 사용
 
@@ -51,7 +51,7 @@
 
 ### 2. 마이그레이션 파일 구성
 
-- Flyway는 `V1__설명.sql` 같은 이름 규칙이 필요하다. 현재 `choimory-dev-member-ddl-v1.sql`은 맞지 않아 이름을 바꿔야 한다. (예: `V1__init_schema.sql`)
+- Flyway는 `V1__설명.sql` 같은 이름 규칙이 필요하다. 현재 `v1-choimory-dev-member-ddl.sql`은 맞지 않아 이름을 바꿔야 한다. (예: `V1__init_schema.sql`)
 - 파일 위치를 정해야 한다.
   - (A) `member-api/src/main/resources/db/migration`으로 옮긴다.
   - (B) `docs/db`를 원본으로 두고 `processResources`로 `db/migration`에 복사한다.
@@ -240,7 +240,7 @@
 
 ## 구현 시작 시 할 일
 
-- 현재 `docs/flyway/v1`은 아직 없다. 구현이 시작되면 `docs/db/v1/choimory-dev-member-ddl-v1.sql`을 `V1__init_schema.sql`로 복사해 첫 마이그레이션으로 둔다.
+- 현재 `docs/flyway/v1`은 아직 없다. 구현이 시작되면 `docs/db/v1/v1-choimory-dev-member-ddl.sql`을 `V1__init_schema.sql`로 복사해 첫 마이그레이션으로 둔다.
 - 이후 스키마 변경은 `docs/flyway/v1`에 `V2__...sql`처럼 새 파일을 추가해서 적는다.
 - `v1` 디렉토리는 버전 폴더이고 파일 안의 `V1`, `V2` 같은 버전과는 별개다. 나중에 `docs/flyway/v2` 디렉토리를 만들어도 파일 버전 번호는 이어서 올라간다. (Flyway가 디렉토리 이름은 구분에 쓰지 않는다)
 

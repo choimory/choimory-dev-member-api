@@ -20,7 +20,7 @@
 # 결과 요약
 
 - Gradle 멀티 모듈 구성: `member-domain`(엔티티, DTO, enum), `member-api`(Spring Boot 애플리케이션)
-- DDL(`docs/db/v1/choimory-dev-member-ddl-v1.sql`): 12개 테이블, 공통 컬럼(id, created_at, modified_at, deleted_at), unique/check/FK 규칙, 멱등 실행 가능(`create ... if not exists`), COMMENT ON 포함
+- DDL(`docs/db/v1/v1-choimory-dev-member-ddl.sql`): 12개 테이블, 공통 컬럼(id, created_at, modified_at, deleted_at), unique/check/FK 규칙, 멱등 실행 가능(`create ... if not exists`), COMMENT ON 포함
 - 엔티티 12개(Member, MemberImage, MemberSuspension, Follow, Authority, Menu, Permission, PermissionAction, MemberAuthority, Agreement, AgreementAnswer, MemberAgreement)와 BaseEntity
 - 엔티티 DTO 12개(record), enum 4개(MemberStatus, MemberImageType, AuthorityCode, PermissionActionType)
 - 테스트 110건 통과 (member-domain 98건, member-api 12건)

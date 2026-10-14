@@ -32,8 +32,8 @@
 ├── docs
 │   ├── api/v1
 │   └── db/v1
-│       ├── choimory-dev-member-ddl-v1.sql   # 테이블 DDL (12개 테이블)
-│       └── choimory-dev-member-dml-v1.sql   # 초기 데이터 (현재 비어 있음)
+│       ├── v1-choimory-dev-member-ddl.sql   # 테이블 DDL (12개 테이블)
+│       └── v1-choimory-dev-member-dml.sql   # 초기 데이터 (현재 비어 있음)
 ├── member-domain                 # 엔티티, DTO, enum (API 모듈과 분리된 도메인 모듈)
 │   └── src/main/java/dev/choimory/member/domain
 │       ├── common/command/entity     # BaseEntity
@@ -129,7 +129,7 @@
 
 - PostgreSQL을 사용한다. 연결 정보는 `application-datasource.yml`의 환경변수(`rdb-host`, `rdb-port`, `rdb-database`, `rdb-user`, `rdb-password`)로 받는다.
 - profile: 기본은 prod, `local`은 `local, sql-init`를 포함한다.
-- `local` profile은 시작 시 `sql/v1/choimory-dev-member-ddl-v1.sql`을 실행한다. (`spring.sql.init.mode: always`, DDL은 `create ... if not exists`로 멱등) Postgres는 `embedded` 모드에서 동작하지 않는다.
+- `local` profile은 시작 시 `sql/v1/v1-choimory-dev-member-ddl.sql`을 실행한다. (`spring.sql.init.mode: always`, DDL은 `create ... if not exists`로 멱등) Postgres는 `embedded` 모드에서 동작하지 않는다.
 - DML 파일이 비어 있는 동안에는 `data-locations`를 지정하지 않는다. (빈 스크립트는 Spring이 오류로 처리한다)
 - dev, prod는 현재 DB 스키마를 자동 생성하지 않는다. (`ddl-auto: none`)
 
