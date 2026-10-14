@@ -136,7 +136,7 @@ class CommonExceptionHandlerTest {
     }
 
     /**
-     * 인증 예외는 401 응답으로 변환됩니다.
+     * 인증 예외는 401 응답으로 변환되며 예외 메시지를 노출하지 않습니다.
      *
      * @throws Exception MockMvc 수행 중 발생
      */
@@ -147,7 +147,7 @@ class CommonExceptionHandlerTest {
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value(401))
                 .andExpect(jsonPath("$.name").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.data").value("bad credentials"));
+                .andExpect(jsonPath("$.data").doesNotExist());
     }
 
     /**

@@ -37,7 +37,9 @@ public class CommonExceptionHandler {
         return new CommonResponse<>(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 HttpStatus.INTERNAL_SERVER_ERROR.name(),
-                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase());
+                HttpStatus.INTERNAL_SERVER_ERROR.getReasonPhrase()
+                // , e.getMessage() // 내부 정보(DB 오류, 쿼리, 클래스 정보 등)가 노출되면 안 되어 응답에서 제외
+                );
     }
 
     /**
@@ -124,7 +126,8 @@ public class CommonExceptionHandler {
         return new CommonResponse<>(
                 HttpStatus.UNAUTHORIZED.value(),
                 HttpStatus.UNAUTHORIZED.name(),
-                HttpStatus.UNAUTHORIZED.getReasonPhrase(),
-                e.getMessage());
+                HttpStatus.UNAUTHORIZED.getReasonPhrase()
+                // , e.getMessage() // 인증 실패 사유(계정 존재 여부 등)가 노출되면 안 되어 응답에서 제외
+                );
     }
 }

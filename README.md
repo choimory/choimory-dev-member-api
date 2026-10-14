@@ -4,8 +4,8 @@
 
 - Choimory 개발 회원 API 프로젝트다.
 - Java 21 기반 Spring Boot 회원 서버이며 Gradle 멀티 모듈로 구성한다.
-- 현재는 회원 도메인의 DB 설계(DDL)와 엔티티, DTO, enum, `member-api`의 도메인별 API 기본 구조(클래스와 필드만, 메소드 없음), 공통 응답과 예외 핸들러까지 구현된 상태이며, API 메소드는 이후 구현한다.
-- 작업 히스토리는 `.agents/histories`를 참고한다. (DB 설계와 구현: `.agents/histories/2026/02/17/modeling`, API 기본 구조와 공통 응답, 예외: `.agents/histories/2026/10/14/api-base-structure`)
+- 현재는 회원 도메인의 DB 설계(DDL)와 엔티티, DTO, enum, `member-api`의 도메인별 API 기본 구조(클래스와 필드만, 메소드 없음), 공통 응답과 예외 핸들러, Flyway 마이그레이션까지 구현된 상태이며, API 메소드는 이후 구현한다.
+- 작업 히스토리는 `.agents/histories`를 참고한다. (DB 설계와 구현: `.agents/histories/2026/02/17/modeling`, API 기본 구조와 공통 응답, 예외: `.agents/histories/2026/10/14/api-base-structure`, Flyway 적용: `.agents/histories/2026/10/14/flyway-apply`)
 
 ## 기술 구성
 
@@ -31,9 +31,11 @@
 ├── settings.gradle               # member-domain, member-api
 ├── docs
 │   ├── api/v1
-│   └── db/v1
-│       ├── v1-choimory-dev-member-ddl.sql   # 테이블 DDL (12개 테이블)
-│       └── v1-choimory-dev-member-dml.sql   # 초기 데이터 (현재 비어 있음)
+│   ├── db/v1                     # 참고용 DDL, DML (앱과 테스트에서 사용하지 않는다)
+│   │   ├── v1-choimory-dev-member-ddl.sql   # 테이블 DDL (12개 테이블)
+│   │   └── v1-choimory-dev-member-dml.sql   # 초기 데이터 (현재 비어 있음)
+│   └── flyway/v1                 # Flyway 마이그레이션 원본
+│       └── V1__init_schema.sql   # 테이블 DDL (12개 테이블, COMMENT는 테이블별로 포함)
 ├── member-domain                 # 엔티티, DTO, enum (API 모듈과 분리된 도메인 모듈)
 │   └── src/main/java/dev/choimory/member/domain
 │       ├── common/command/entity     # BaseEntity
@@ -49,12 +51,12 @@
         │   ├── common/exception          # CommonException, CommonExceptionHandler
         │   └── {member,authority,agreement,menu}/v1/{command,query}/{controller,service,handler,repository}
         └── resources
-            ├── application.yml, application-datasource.yml
+            ├── application.yml, application-datasource.yml, application-flyway.yml
             └── application-{local,dev,prod}.yml
 ```
 
 - `member-api`는 `member-domain`에 의존하며, `JpaConfig`가 엔티티는 `dev.choimory.member.domain`, 레포지토리는 `dev.choimory.member.api` 패키지에서 스캔한다.
-- 빌드 시 `docs/db`가 `member-api`의 classpath `sql/` 아래로 복사된다.
+- 빌드 시 `docs/flyway`가 `member-api`의 classpath `db/migration/` 아래로 복사된다. (`processResources`, 결과: `db/migration/v1/V1__init_schema.sql`)
 
 ## 도메인 모델
 
@@ -128,10 +130,15 @@
 ## DB와 실행 환경
 
 - PostgreSQL을 사용한다. 연결 정보는 `application-datasource.yml`의 환경변수(`rdb-host`, `rdb-port`, `rdb-database`, `rdb-user`, `rdb-password`)로 받는다.
-- profile: 기본은 prod, `local`은 `local, sql-init`를 포함한다.
-- `local` profile은 시작 시 `sql/v1/v1-choimory-dev-member-ddl.sql`을 실행한다. (`spring.sql.init.mode: always`, DDL은 `create ... if not exists`로 멱등) Postgres는 `embedded` 모드에서 동작하지 않는다.
-- DML 파일이 비어 있는 동안에는 `data-locations`를 지정하지 않는다. (빈 스크립트는 Spring이 오류로 처리한다)
-- dev, prod는 현재 DB 스키마를 자동 생성하지 않는다. (`ddl-auto: none`)
+- profile: 기본은 prod이며, `prod`, `dev`, `local` 프로필 그룹은 모두 `flyway` 프로필을 포함한다. (`application-prod.yml`은 `prod` 프로필에서만 적용되고 SQL 로그를 출력하지 않는다)
+- 스키마는 Flyway가 앱 기동 시 `db/migration`의 마이그레이션 SQL로 관리한다. (`ddl-auto: none`, 설정은 `application-flyway.yml`: `validate-on-migrate: true`, `clean-disabled: true`)
+  - 마이그레이션 원본은 `docs/flyway/v1`이다. 파일명은 `V{버전}__{설명}.sql`(밑줄 두 개)이며 버전 순으로 적용된다.
+  - 이미 적용된 버전은 수정하지 않는다. (체크섬 검증으로 기동이 실패한다) 변경은 `V2__...sql`처럼 새 파일을 추가한다.
+  - `V1__init_schema.sql`은 기존 DDL이 적용된 DB에서도 안전하도록 `create ... if not exists`를 유지하고 DROP 문은 쓰지 않는다. COMMENT는 각 테이블의 DDL 바로 아래에 둔다.
+  - DML(초기 데이터)은 아직 없으며 필요할 때 `V2__...sql`로 추가한다.
+  - `docs/db/v1`은 참고용이며 앱과 테스트에서 사용하지 않는다. 최신 스키마는 `docs/flyway` 기준이다.
+- 기존 DDL이 적용된 DB(이력 테이블이 없는 비어 있지 않은 스키마)에 처음 붙이면 `Found non-empty schema(s) "public" but no schema history table` 오류로 기동하지 않는다. 로컬은 DB를 비우고 다시 만들고, 그 외 환경은 baseline 전략(`baseline-on-migrate`, `baseline-version`)을 정해 적용한다. (현재 설정에는 baseline이 없다)
+- Flyway는 `member-api`에만 적용하며 `member-domain`에는 의존성이 없다. 서비스별로 PostgreSQL database를 따로 두고 `public` 스키마를 쓰는 구성을 기본으로 한다.
 
 ## 코드 규칙
 
@@ -144,9 +151,13 @@
 ## 테스트
 
 - 테스트는 Testcontainers Postgres 16을 사용하며 Docker가 필요하다.
-- `member-domain` 테스트는 `docs/db/v1`의 DDL을 컨테이너 초기화 스크립트로 적용하고 `ddl-auto=validate`로 엔티티와 DDL 정합성을 검증한다. (gradle이 시스템 프로퍼티 `docs.db.ddl`로 경로를 전달한다)
+- `member-domain` 테스트는 `docs/flyway`의 `V*.sql`을 버전 순으로 컨테이너 초기화 스크립트에 적용하고 `ddl-auto=validate`로 엔티티와 스키마 정합성을 검증한다. (gradle이 시스템 프로퍼티 `docs.flyway.dir`로 경로를 전달하고, 테스트의 `MigrationScripts`가 버전 숫자 순으로 정렬한다)
+- `member-api` 테스트도 Testcontainers Postgres 16을 쓰며, 앱 기동 시 Flyway가 실제로 마이그레이션을 적용한다.
 - 주요 테스트
-  - `DdlScriptTest`: unique, check, FK, 멱등 실행
+  - `DdlScriptTest`: unique, check, FK, 마이그레이션 SQL 재실행(멱등)
+  - `MigrationScriptsTest`: 마이그레이션 파일명 규칙, 버전 순 정렬
+  - `FlywayMigrationTest`(member-api): Flyway 이력에 V1 성공 기록, 12개 테이블 생성, `ddl-auto=validate`로 엔티티와 스키마 정합성
+  - `FlywayProfileTest`(member-api): local, dev, prod 프로필의 flyway 활성화, 마이그레이션 SQL의 classpath 복사, prod 프로필 설정
   - `BaseEntityTest`, `MemberEntitiesTest`, `AuthorityEntitiesTest`, `AgreementEntitiesTest`: 저장, 조회, cascade, soft delete
   - `EntityRulesTest`: 모든 엔티티의 `@SQLRestriction` 선언, 클래스 레벨 Builder, `@Table` 미사용, 정적 `create` 없음
   - `DtoRulesTest`, `*DtosTest`: DTO 규칙과 변환
