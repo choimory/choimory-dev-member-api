@@ -1,7 +1,7 @@
 package dev.choimory.member.domain.agreement.command.dto;
 
 import dev.choimory.member.domain.agreement.command.entity.AgreementAnswer;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 
 /**
@@ -16,12 +16,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record AgreementAnswerDto(
-        String id,
-        String name,
-        boolean isPositive,
-        LocalDateTime createdAt,
-        LocalDateTime modifiedAt,
-        LocalDateTime deletedAt) {
+        String id, String name, boolean isPositive, Instant createdAt, Instant modifiedAt, Instant deletedAt) {
 
     /**
      * 선택 항목 엔티티를 DTO로 변환합니다.

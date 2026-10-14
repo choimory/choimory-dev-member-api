@@ -1,7 +1,7 @@
 package dev.choimory.member.domain.member.command.dto;
 
 import dev.choimory.member.domain.member.command.entity.MemberSuspension;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 
 /**
@@ -18,12 +18,12 @@ import lombok.Builder;
 @Builder(toBuilder = true)
 public record MemberSuspensionDto(
         String id,
-        LocalDateTime suspendedAt,
-        LocalDateTime suspendedTo,
+        Instant suspendedAt,
+        Instant suspendedTo,
         String reason,
-        LocalDateTime createdAt,
-        LocalDateTime modifiedAt,
-        LocalDateTime deletedAt) {
+        Instant createdAt,
+        Instant modifiedAt,
+        Instant deletedAt) {
 
     /**
      * 정지 이력 엔티티를 DTO로 변환합니다.

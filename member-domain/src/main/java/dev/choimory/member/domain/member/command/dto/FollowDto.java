@@ -1,7 +1,7 @@
 package dev.choimory.member.domain.member.command.dto;
 
 import dev.choimory.member.domain.member.command.entity.Follow;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 
 /**
@@ -17,12 +17,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record FollowDto(
-        String id,
-        MemberDto follower,
-        MemberDto followee,
-        LocalDateTime createdAt,
-        LocalDateTime modifiedAt,
-        LocalDateTime deletedAt) {
+        String id, MemberDto follower, MemberDto followee, Instant createdAt, Instant modifiedAt, Instant deletedAt) {
 
     /**
      * 팔로우 엔티티를 DTO로 변환합니다.

@@ -9,7 +9,8 @@ import dev.choimory.member.domain.member.command.type.MemberImageType;
 import dev.choimory.member.domain.member.command.type.MemberStatus;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceException;
-import java.time.LocalDateTime;
+import java.time.Duration;
+import java.time.Instant;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -180,8 +181,8 @@ class MemberEntitiesTest {
                 .build());
         member.addSuspension(MemberSuspension.builder()
                 .member(member)
-                .suspendedAt(LocalDateTime.now())
-                .suspendedTo(LocalDateTime.now().plusDays(1))
+                .suspendedAt(Instant.now())
+                .suspendedTo(Instant.now().plus(Duration.ofDays(1)))
                 .reason("reason")
                 .build());
         em.persist(member);
@@ -322,8 +323,8 @@ class MemberEntitiesTest {
     void memberSuspensionIsRegisteredAndCascaded() {
         // 정지 이력을 만들면 회원의 정지 이력 목록에 등록되어야 한다.
         Member member = EntityFixtures.member();
-        LocalDateTime from = LocalDateTime.of(2026, 1, 1, 0, 0);
-        LocalDateTime to = LocalDateTime.of(2026, 1, 8, 0, 0);
+        Instant from = Instant.parse("2026-01-01T00:00:00Z");
+        Instant to = Instant.parse("2026-01-08T00:00:00Z");
         MemberSuspension suspension = member.addSuspension(MemberSuspension.builder()
                 .member(member)
                 .suspendedAt(from)

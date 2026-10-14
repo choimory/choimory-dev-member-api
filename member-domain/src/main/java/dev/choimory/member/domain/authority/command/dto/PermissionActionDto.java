@@ -2,7 +2,7 @@ package dev.choimory.member.domain.authority.command.dto;
 
 import dev.choimory.member.domain.authority.command.entity.PermissionAction;
 import dev.choimory.member.domain.authority.command.type.PermissionActionType;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 
 /**
@@ -16,11 +16,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record PermissionActionDto(
-        String id,
-        PermissionActionType action,
-        LocalDateTime createdAt,
-        LocalDateTime modifiedAt,
-        LocalDateTime deletedAt) {
+        String id, PermissionActionType action, Instant createdAt, Instant modifiedAt, Instant deletedAt) {
 
     /**
      * 액션 엔티티를 DTO로 변환합니다.

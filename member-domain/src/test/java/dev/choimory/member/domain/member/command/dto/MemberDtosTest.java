@@ -17,7 +17,7 @@ import dev.choimory.member.domain.member.command.type.MemberImageType;
 import dev.choimory.member.domain.member.command.type.MemberStatus;
 import jakarta.persistence.EntityManager;
 import java.lang.reflect.RecordComponent;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import org.hibernate.Hibernate;
@@ -57,8 +57,8 @@ class MemberDtosTest {
                 .resizeFileName("rn")
                 .resizeFileSize(2L)
                 .build());
-        LocalDateTime from = LocalDateTime.of(2026, 1, 1, 0, 0);
-        LocalDateTime to = LocalDateTime.of(2026, 1, 8, 0, 0);
+        Instant from = Instant.parse("2026-01-01T00:00:00Z");
+        Instant to = Instant.parse("2026-01-08T00:00:00Z");
         member.addSuspension(MemberSuspension.builder()
                 .member(member)
                 .suspendedAt(from)

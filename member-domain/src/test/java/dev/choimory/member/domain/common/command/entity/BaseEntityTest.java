@@ -7,7 +7,7 @@ import dev.choimory.member.domain.TestcontainersConfiguration;
 import dev.choimory.member.testsupport.TestBaseEntity;
 import dev.choimory.member.testsupport.TestBaseEntityRepository;
 import jakarta.persistence.EntityManager;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -35,7 +35,7 @@ import org.springframework.test.context.jdbc.Sql;
 @Sql(
         statements = "create table if not exists test_base_entity ("
                 + "id varchar(36) not null primary key, name varchar(100),"
-                + " created_at timestamp not null, modified_at timestamp, deleted_at timestamp)")
+                + " created_at timestamptz not null, modified_at timestamptz, deleted_at timestamptz)")
 class BaseEntityTest {
 
     /**
@@ -231,7 +231,7 @@ class BaseEntityTest {
         em.flush();
         em.clear();
         TestBaseEntity loaded = em.find(TestBaseEntity.class, entity.getId());
-        LocalDateTime createdAt = loaded.getCreatedAt();
+        Instant createdAt = loaded.getCreatedAt();
 
         // 수정 이력이 없으므로 modifiedAt은 null이어야 한다.
         assertThat(loaded.getModifiedAt()).isNull();
@@ -242,7 +242,7 @@ class BaseEntityTest {
         em.flush();
 
         // 수정 일시가 채워지고 생성 일시는 유지되어야 한다.
-        LocalDateTime firstModifiedAt = loaded.getModifiedAt();
+        Instant firstModifiedAt = loaded.getModifiedAt();
         assertThat(loaded.getCreatedAt()).isEqualTo(createdAt);
         assertThat(firstModifiedAt).isAfter(createdAt);
 

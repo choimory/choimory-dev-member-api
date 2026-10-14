@@ -6,7 +6,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -30,10 +30,10 @@ public class MemberSuspension extends BaseEntity {
     private Member member; // 회원
 
     @Column(name = "suspended_at", nullable = false)
-    private LocalDateTime suspendedAt; // 정지 시작 일시
+    private Instant suspendedAt; // 정지 시작 일시
 
     @Column(name = "suspended_to", nullable = false)
-    private LocalDateTime suspendedTo; // 정지 종료 일시
+    private Instant suspendedTo; // 정지 종료 일시
 
     @Column(name = "reason", nullable = false, length = 500)
     private String reason; // 정지 사유

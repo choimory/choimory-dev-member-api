@@ -1,7 +1,7 @@
 package dev.choimory.member.domain.authority.command.dto;
 
 import dev.choimory.member.domain.authority.command.entity.MemberAuthority;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 
 /**
@@ -16,7 +16,7 @@ import lombok.Builder;
  */
 @Builder(toBuilder = true)
 public record MemberAuthorityDto(
-        String id, AuthorityDto authority, LocalDateTime createdAt, LocalDateTime modifiedAt, LocalDateTime deletedAt) {
+        String id, AuthorityDto authority, Instant createdAt, Instant modifiedAt, Instant deletedAt) {
 
     /**
      * 회원 권한 엔티티를 DTO로 변환합니다.

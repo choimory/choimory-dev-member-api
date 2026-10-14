@@ -2,7 +2,7 @@ package dev.choimory.member.domain.member.command.dto;
 
 import dev.choimory.member.domain.member.command.entity.MemberImage;
 import dev.choimory.member.domain.member.command.type.MemberImageType;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.Builder;
 
 /**
@@ -32,9 +32,9 @@ public record MemberImageDto(
         String resizeFilePath,
         String resizeFileName,
         long resizeFileSize,
-        LocalDateTime createdAt,
-        LocalDateTime modifiedAt,
-        LocalDateTime deletedAt) {
+        Instant createdAt,
+        Instant modifiedAt,
+        Instant deletedAt) {
 
     /**
      * 회원 이미지 엔티티를 DTO로 변환합니다.

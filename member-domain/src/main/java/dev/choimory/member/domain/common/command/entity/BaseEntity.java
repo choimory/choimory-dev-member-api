@@ -8,7 +8,7 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PostLoad;
 import jakarta.persistence.PostPersist;
 import jakarta.persistence.Transient;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import lombok.AccessLevel;
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;
@@ -42,14 +42,14 @@ public abstract class BaseEntity implements Persistable<String> {
 
     @CreatedDate
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt; // 생성 일시
+    private Instant createdAt; // 생성 일시
 
     @LastModifiedDate
     @Column(name = "modified_at")
-    private LocalDateTime modifiedAt; // 수정 일시
+    private Instant modifiedAt; // 수정 일시
 
     @Column(name = "deleted_at")
-    private LocalDateTime deletedAt; // 삭제 일시 (soft delete)
+    private Instant deletedAt; // 삭제 일시 (soft delete)
 
     @Transient
     @Getter(AccessLevel.NONE)
@@ -77,7 +77,7 @@ public abstract class BaseEntity implements Persistable<String> {
      * soft delete 처리합니다. deleted_at을 현재 일시로 설정합니다.
      */
     public void softDelete() {
-        this.deletedAt = LocalDateTime.now();
+        this.deletedAt = Instant.now();
     }
 
     /**

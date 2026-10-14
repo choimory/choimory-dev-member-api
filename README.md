@@ -99,6 +99,7 @@
   - 참조만 하는 관계는 cascade 없음, DB FK는 RESTRICT (menu 부모, agreement_answer, authority, menu)
   - Menu 하위 메뉴는 PERSIST, MERGE만 전파한다.
 - 수정은 엔티티 메소드(`updateProfile`, `changePassword`, `changeStatus` 등)로 한다.
+- 시각 필드는 `java.time.Instant`이고 DB 컬럼은 `timestamptz`다. (`createdAt`, `modifiedAt`, `deletedAt`, 정지 기간 `suspendedAt`, `suspendedTo`) DTO도 `Instant`를 쓰며, JSON은 UTC 기준 ISO 문자열로 나간다. 달력 계산(예: 한 달 뒤)이 필요하면 `ZoneId`를 붙여 변환한다.
 
 ## DTO 규칙
 
@@ -135,7 +136,8 @@
   - 마이그레이션 원본은 `docs/flyway/v1`이다. 파일명은 `V{버전}__{설명}.sql`(밑줄 두 개)이며 버전 순으로 적용된다.
   - 이미 적용된 버전은 수정하지 않는다. (체크섬 검증으로 기동이 실패한다) 변경은 `V2__...sql`처럼 새 파일을 추가한다.
   - `V1__init_schema.sql`은 기존 DDL이 적용된 DB에서도 안전하도록 `create ... if not exists`를 유지하고 DROP 문은 쓰지 않는다. COMMENT는 각 테이블의 DDL 바로 아래에 둔다.
-  - DML(초기 데이터)은 아직 없으며 필요할 때 `V2__...sql`로 추가한다.
+  - `V2__timestamp_to_timestamptz.sql`은 모든 시각 컬럼(38개)을 `timestamp`에서 `timestamptz`로 바꾼다. 기존 값은 서버 시간대(`Asia/Seoul`)로 쓴 값으로 보고 `using ... at time zone 'Asia/Seoul'`로 변환한다.
+  - DML(초기 데이터)은 아직 없으며 필요할 때 다음 버전(`V3__...sql` 등)으로 추가한다.
   - `docs/db/v1`은 참고용이며 앱과 테스트에서 사용하지 않는다. 최신 스키마는 `docs/flyway` 기준이다.
 - 기존 DDL이 적용된 DB(이력 테이블이 없는 비어 있지 않은 스키마)에 처음 붙이면 `Found non-empty schema(s) "public" but no schema history table` 오류로 기동하지 않는다. 로컬은 DB를 비우고 다시 만들고, 그 외 환경은 baseline 전략(`baseline-on-migrate`, `baseline-version`)을 정해 적용한다. (현재 설정에는 baseline이 없다)
 - Flyway는 `member-api`에만 적용하며 `member-domain`에는 의존성이 없다. 서비스별로 PostgreSQL database를 따로 두고 `public` 스키마를 쓰는 구성을 기본으로 한다.
@@ -157,6 +159,7 @@
   - `DdlScriptTest`: unique, check, FK, 마이그레이션 SQL 재실행(멱등)
   - `MigrationScriptsTest`: 마이그레이션 파일명 규칙, 버전 순 정렬
   - `FlywayMigrationTest`(member-api): Flyway 이력에 V1 성공 기록, 12개 테이블 생성, `ddl-auto=validate`로 엔티티와 스키마 정합성
+  - `FlywayTimestamptzMigrationTest`(member-api): V1에 `Asia/Seoul` 시각을 저장한 뒤 V2 적용 후 UTC 시각으로 올바르게 변환되는지 확인
   - `FlywayProfileTest`(member-api): local, dev, prod 프로필의 flyway 활성화, 마이그레이션 SQL의 classpath 복사, prod 프로필 설정
   - `BaseEntityTest`, `MemberEntitiesTest`, `AuthorityEntitiesTest`, `AgreementEntitiesTest`: 저장, 조회, cascade, soft delete
   - `EntityRulesTest`: 모든 엔티티의 `@SQLRestriction` 선언, 클래스 레벨 Builder, `@Table` 미사용, 정적 `create` 없음

@@ -1,7 +1,7 @@
 package dev.choimory.member.domain.authority.command.dto;
 
 import dev.choimory.member.domain.authority.command.entity.Permission;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import lombok.Builder;
 
@@ -21,9 +21,9 @@ public record PermissionDto(
         String id,
         MenuDto menu,
         List<PermissionActionDto> actions,
-        LocalDateTime createdAt,
-        LocalDateTime modifiedAt,
-        LocalDateTime deletedAt) {
+        Instant createdAt,
+        Instant modifiedAt,
+        Instant deletedAt) {
 
     /**
      * permission 엔티티를 DTO로 변환합니다. 지연 로딩 컬렉션을 읽으므로 트랜잭션 안에서 호출해야 합니다.

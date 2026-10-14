@@ -133,6 +133,32 @@ class DdlScriptTest {
     }
 
     /**
+     * 모든 시각 컬럼이 timestamptz(timestamp with time zone)인지 확인합니다.
+     */
+    @Test
+    void timeColumnsAreTimestamptz() {
+        // 테이블의 시각 컬럼 중 시간대가 없는 timestamp 컬럼을 조회한다.
+        List<String> withoutZone = jdbc.queryForList(
+                "select table_name || '.' || column_name from information_schema.columns"
+                        + " where table_schema = current_schema() and table_name = any (?)"
+                        + " and data_type = 'timestamp without time zone'",
+                String.class,
+                (Object) TABLES.toArray(new String[0]));
+
+        // 시간대가 없는 timestamp 컬럼이 없어야 한다.
+        assertThat(withoutZone).isEmpty();
+
+        // 공통 시각 컬럼과 정지 기간 컬럼이 timestamptz여야 한다.
+        List<String> withZone = jdbc.queryForList(
+                "select table_name || '.' || column_name from information_schema.columns"
+                        + " where table_schema = current_schema() and table_name = any (?)"
+                        + " and data_type = 'timestamp with time zone'",
+                String.class,
+                (Object) TABLES.toArray(new String[0]));
+        assertThat(withZone).hasSize(38).contains("member.created_at", "member_suspension.suspended_to");
+    }
+
+    /**
      * 마이그레이션 SQL을 이미 적용된 DB에 다시 실행해도 오류가 없는지(멱등) 확인합니다.
      * Flyway는 적용된 버전을 다시 실행하지 않지만, V1은 기존 DDL이 적용된 DB에서도 안전하도록 멱등으로 유지합니다.
      */
