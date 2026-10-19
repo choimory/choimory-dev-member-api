@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
@@ -151,6 +152,20 @@ class CommonExceptionHandlerTest {
     }
 
     /**
+     * 접근 거부 예외는 500이 아니라 403 응답으로 변환됩니다.
+     *
+     * @throws Exception MockMvc 수행 중 발생
+     */
+    @Test
+    void accessDeniedExceptionBecomesForbidden() throws Exception {
+        // 접근 거부 예외를 던지면 403 응답이어야 한다.
+        mockMvc.perform(get("/denied"))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code").value(403))
+                .andExpect(jsonPath("$.name").value("FORBIDDEN"));
+    }
+
+    /**
      * 요청 본문 검증 대상 객체입니다.
      */
     record ValidRequest(@NotBlank String name) {}
@@ -189,6 +204,11 @@ class CommonExceptionHandlerTest {
             Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
             Set<ConstraintViolation<ValidRequest>> violations = validator.validate(new ValidRequest(""));
             throw new ConstraintViolationException(violations);
+        }
+
+        @GetMapping("/denied")
+        void denied() {
+            throw new AccessDeniedException("denied");
         }
 
         @GetMapping("/auth")

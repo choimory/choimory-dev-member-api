@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -111,6 +112,22 @@ public class CommonExceptionHandler {
                 HttpStatus.BAD_REQUEST.name(),
                 HttpStatus.BAD_REQUEST.getReasonPhrase(),
                 results);
+    }
+
+    /**
+     * 메서드 보안(@PreAuthorize 등)이 던진 접근 거부 예외를 권한 없음 응답으로 변환합니다.
+     * 컨트롤러 안에서 발생한 예외는 Security 필터의 접근 거부 핸들러가 아니라 이 어드바이스로 오므로,
+     * 처리하지 않으면 일반 예외 핸들러에 걸려 500이 됩니다.
+     *
+     * @param e 접근 거부 예외
+     * @return 권한 없음 응답
+     */
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public CommonResponse<String> accessDeniedException(AccessDeniedException e) {
+        // 권한 없음 응답으로 변환한다.
+        return new CommonResponse<>(
+                HttpStatus.FORBIDDEN.value(), HttpStatus.FORBIDDEN.name(), HttpStatus.FORBIDDEN.getReasonPhrase());
     }
 
     /**

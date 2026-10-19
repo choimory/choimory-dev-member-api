@@ -4,10 +4,13 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.choimory.member.api.common.exception.CommonException;
+import dev.choimory.member.api.security.filter.JwtAuthenticationFilter;
 import dev.choimory.member.api.security.handler.CommonAccessDeniedHandler;
 import dev.choimory.member.api.security.handler.CommonAuthenticationEntryPoint;
 import dev.choimory.member.api.security.handler.SecurityResponseWriter;
 import org.junit.jupiter.api.Test;
+import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.access.AccessDeniedException;
@@ -44,6 +47,31 @@ class SecurityHandlersTest {
     }
 
     /**
+     * JWT 필터가 요청 속성에 담아 둔 토큰 오류가 있으면 진입점은 그 종류(TOKEN_EXPIRED 등)로 응답합니다.
+     *
+     * @throws Exception 응답 작성 중 발생
+     */
+    @Test
+    void entryPointWritesTokenErrorFromRequestAttribute() throws Exception {
+        // JWT 필터가 만료 오류를 요청 속성에 담아 둔 상황을 만든다.
+        MockHttpServletRequest request = new MockHttpServletRequest();
+        request.setAttribute(
+                JwtAuthenticationFilter.ERROR_ATTRIBUTE,
+                new CommonException(HttpStatus.UNAUTHORIZED, 401, "TOKEN_EXPIRED", "만료된 토큰입니다."));
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        // 진입점을 호출한다.
+        new CommonAuthenticationEntryPoint(writer).commence(request, response, new BadCredentialsException("x"));
+
+        // 오류 종류와 메시지가 응답에 담겨야 한다.
+        assertThat(response.getStatus()).isEqualTo(401);
+        JsonNode body = objectMapper.readTree(response.getContentAsString());
+        assertThat(body.get("code").asInt()).isEqualTo(401);
+        assertThat(body.get("name").asText()).isEqualTo("TOKEN_EXPIRED");
+        assertThat(body.get("message").asText()).isEqualTo("만료된 토큰입니다.");
+    }
+
+    /**
      * 접근 거부 핸들러는 403 공통 응답을 작성합니다.
      *
      * @throws Exception 응답 작성 중 발생
@@ -73,7 +101,7 @@ class SecurityHandlersTest {
     void responseIsUtf8() throws Exception {
         // 응답을 작성한다.
         MockHttpServletResponse response = new MockHttpServletResponse();
-        writer.write(response, org.springframework.http.HttpStatus.UNAUTHORIZED);
+        writer.write(response, HttpStatus.UNAUTHORIZED);
 
         // 문자 인코딩이 UTF-8이어야 한다.
         assertThat(response.getCharacterEncoding()).isEqualToIgnoringCase("UTF-8");

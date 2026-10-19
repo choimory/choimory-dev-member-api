@@ -35,6 +35,24 @@
   - [handler 3개의 역할](#handler-3개의-역할)
   - [JwtProperties 위치](#jwtproperties-위치)
   - [패키지 위치 추가 변경](#패키지-위치-추가-변경)
+- [jwt key에 accesskey는 필요없어?](#jwt-key에-accesskey는-필요없어)
+  - [답변](#답변-5)
+  - [지금 구조](#지금-구조)
+  - [키를 따로 두면 달라지는 것](#키를-따로-두면-달라지는-것)
+  - [판단](#판단)
+  - [정해야 할 것](#정해야-할-것-1)
+- [설정에 jwt-secret 이것만 있으면 돼?](#설정에-jwt-secret-이것만-있으면-돼)
+  - [답변](#답변-6)
+  - [이유](#이유)
+  - [토큰은 암호화되지 않는다](#토큰은-암호화되지-않는다)
+  - [그 밖에 앞으로 필요한 설정값](#그-밖에-앞으로-필요한-설정값)
+  - [나중에 키가 늘어날 수 있는 경우](#나중에-키가-늘어날-수-있는-경우)
+- [access token이랑 secret token을 별도 Key로 관리하는 안](#access-token이랑-secret-token을-별도-key로-관리하는-안)
+  - [답변](#답변-7)
+  - [키를 따로 관리하면 생기는 이점](#키를-따로-관리하면-생기는-이점)
+  - [우리 구조에서 이점이 작은 이유](#우리-구조에서-이점이-작은-이유)
+  - [바꾸게 되면 달라지는 곳](#바꾸게-되면-달라지는-곳)
+  - [남은 결정](#남은-결정)
 
 ---
 
@@ -291,3 +309,108 @@ Access 만료 → POST /v1/auth/reissue {refresh} → 새 Access + 새 Refresh
 - `common/security`를 `security`로 옮겼다. 핸들러는 `member-api/.../api/security/handler`에 있다. `common`에는 `exception`만 남는다.
 - `jwt`는 `security` 아래가 아니라 `api` 바로 아래(`dev.choimory.member.api.jwt`)에 둔다. `JwtProvider`와 `JwtProperties`를 이 패키지에 만든다.
 - 테스트도 같은 구조로 `test/.../api/security`로 옮겼고, 패키지 선언과 import를 모두 고쳤다. `clean build`가 통과했다.
+
+---
+
+# jwt key에 accesskey는 필요없어?
+
+> jwt key에 accesskey는 필요없어?
+
+## 답변
+
+질문을 Access/Refresh 토큰마다 서명 키를 따로 두는 것으로 이해하고 답했다. 정확한 의미가 다르면 다시 확인하기로 했다.
+
+## 지금 구조
+
+키 하나(`jwt-secret`)로 Access Token과 Refresh Token을 같은 키로 서명하고, 토큰 안의 `type` 클레임(`access`/`refresh`)으로 구분한다. `JwtProvider.parse(token, 기대 종류)`가 종류가 다르면 `INVALID_TOKEN`으로 거부하므로 Refresh Token을 Access 자리에 쓰는 것은 막혀 있다. 이 동작은 `JwtProviderTest`와 `JwtAuthenticationFilterTest`로 확인했다.
+
+## 키를 따로 두면 달라지는 것
+
+| | 키 1개 | 키 2개 (access / refresh) |
+|---|---|---|
+| 종류 혼용 방지 | `type` 클레임 검사 | 서명 자체가 달라 검증에서 실패 (이중 방어) |
+| 키 하나가 유출되면 | 두 종류 모두 위조 가능 | 유출된 종류만 위조 가능 |
+| 설정 | `jwt-secret` 1개 | `jwt-access-secret`, `jwt-refresh-secret` 2개 |
+| 코드 | 지금 그대로 | `JwtProperties`와 `JwtProvider`에 종류별 키 분기 |
+
+## 판단
+
+키를 따로 둘 필요는 크지 않다.
+
+- 두 키 모두 같은 서버의 같은 환경변수에서 읽기 때문에, 환경이 털리면 두 키가 함께 유출된다. 유출된 쪽만 위조된다는 이점이 실제로는 거의 없다.
+- 혼용 방지는 `type` 클레임 검사로 이미 된다.
+- Refresh Token은 서명 검증 외에 Redis에 저장된 토큰인지도 확인하므로(3단계) 위조된 Refresh Token은 서버 상태로 한 번 더 걸러진다.
+- 키가 둘이면 키 교체(rotation) 때 관리 대상이 늘어난다.
+
+다만 키 유출 시 영향 범위를 줄이고 싶거나 보안 점검에서 요구한다면 따로 두는 것도 어렵지 않다. `JwtProperties`를 `accessSecret`, `refreshSecret`으로 나누고 `JwtProvider`가 종류에 맞는 키를 쓰게 바꾸면 되고, 변경은 `JwtProvider`, 설정 파일, 테스트 정도이다.
+
+## 정해야 할 것
+
+1. 키 하나로 유지할지, 둘로 나눌지 (추천: 하나)
+2. "accesskey"가 다른 의미였다면 알려 주기. 예를 들어 클라이언트가 API를 호출할 때 쓰는 키(API key) 같은 것인지.
+
+---
+
+# 설정에 jwt-secret 이것만 있으면 돼?
+
+> 설정에 jwt-secret 이것만 있으면 돼? encrypt 키나 access 키 이런건 필요없고?
+
+## 답변
+
+지금은 `jwt-secret` 하나면 충분하다.
+
+## 이유
+
+- 지금 방식은 서명된 JWT(JWS, HS256)이다. 서명 키 하나로 토큰을 만들고 검증하므로 필요한 키는 이것뿐이다.
+- encrypt 키는 토큰 내용을 암호화하는 JWE 방식에서만 필요하다. 우리는 쓰지 않는다.
+- access 키라는 별도 개념은 JWT에 없다. Access Token과 Refresh Token을 서명할 키를 나눈다는 뜻이라면 앞에서 설명한 대로 하나로 충분하다.
+
+## 토큰은 암호화되지 않는다
+
+서명은 변조를 막을 뿐, 토큰 내용은 누구나 Base64로 읽을 수 있다. 우리 토큰의 클레임은 회원 ID, 권한 코드, 토큰 종류, jti, 발급자, 발급·만료 시각뿐이라 민감한 정보가 없다. 이메일이나 비밀번호 같은 값은 토큰에 넣지 않는 규칙을 유지하면 암호화는 필요 없다.
+
+## 그 밖에 앞으로 필요한 설정값
+
+JWT 키와 별개인 인프라 설정이다.
+
+- 3단계: Redis 접속 정보(`redis-host`, `redis-port`, `redis-password`)
+- 비밀번호 해싱(BCrypt)은 키 없이 솔트를 내장하므로 설정값이 필요 없다.
+
+## 나중에 키가 늘어날 수 있는 경우
+
+다른 서비스가 이 토큰을 검증하게 되면, HS256은 검증하는 쪽도 같은 비밀키를 알아야 하므로 부담이 된다. 그때는 비대칭 서명(RS256: 비공개 키로 서명, 공개 키로 검증)으로 바꾸는 것을 고려한다. 지금은 이 서버만 토큰을 검증하므로 해당 없다.
+
+---
+
+# access token이랑 secret token을 별도 Key로 관리하는 안
+
+> access token이랑 secret token을 별도로 가져가서 Key도 두개로 관리하는건?
+
+## 답변
+
+흔히 쓰는 방식이고 틀린 선택은 아니다. 다만 우리 구조에서는 얻는 이득이 작아서 키 하나를 유지하는 쪽을 약하게 추천한다.
+
+## 키를 따로 관리하면 생기는 이점
+
+- 종류 혼용이 서명 단계에서 막힌다. 지금은 `type` 클레임 검사로 막고 있고, 키가 다르면 검사 이전에 서명 검증에서 실패한다. 방어가 한 겹 늘어난다.
+- 키를 독립적으로 교체할 수 있다. Refresh 키만 바꾸면 모든 Refresh Token이 한 번에 무효가 되어 전체 강제 로그아웃이 되고, Access 키만 바꾸면 Access Token만 무효가 되어 클라이언트가 재발급으로 복구한다. 다만 우리는 Refresh Token이 Redis에 저장되므로 Redis 키를 지우는 것으로도 같은 효과를 낼 수 있다.
+- 정책이 갈린다. 예를 들어 나중에 Refresh Token 검증을 인증 전용 서버로만 옮기는 경우, 그 서버만 Refresh 키를 가지게 할 수 있다.
+
+## 우리 구조에서 이점이 작은 이유
+
+- 두 키가 같은 서버의 같은 환경변수에서 읽히므로, 환경이 털리면 두 키가 함께 유출된다.
+- 종류 혼용은 이미 `type` 클레임과 `JwtProviderTest`, `JwtAuthenticationFilterTest`로 막혀 있다.
+- Refresh Token은 서명 검증 뒤에 Redis에 있는 토큰인지도 확인하므로(3단계) 위조된 Refresh Token은 서버 상태로 한 번 더 걸러진다.
+- 반대로 비용이 있다. 환경변수와 설정이 2개로 늘고, `JwtProvider`가 종류마다 키를 골라야 하며, 키 교체와 테스트 구성이 복잡해진다.
+
+## 바꾸게 되면 달라지는 곳
+
+- `application-jwt.yml`: `jwt.secret` 대신 `jwt.access-secret`, `jwt.refresh-secret` (환경변수 `jwt-access-secret`, `jwt-refresh-secret`)
+- `JwtProperties`, `JwtProvider`: 종류별 키 필드, 발급·검증 시 종류에 맞는 키 사용
+- 테스트: `build.gradle`의 시스템 프로퍼티 2개, 기존 `JwtProviderTest`, `JwtAuthenticationFilterTest` 보강. 종류 혼용 테스트는 서명 실패로 바뀐다.
+- 변경 범위는 2단계 코드 안이라 크지 않다.
+
+## 남은 결정
+
+1. 키 하나(현재)로 유지할지, 둘로 나눌지. 독립적인 교체나 정책 분리가 필요하면 둘이 맞다.
+2. 나눈다면 지금 바로 2단계 코드를 고치고 3단계로 넘어간다.
