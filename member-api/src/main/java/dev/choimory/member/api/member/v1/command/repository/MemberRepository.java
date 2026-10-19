@@ -40,4 +40,13 @@ public interface MemberRepository extends JpaRepository<Member, String> {
      */
     @EntityGraph(attributePaths = {"authorities", "authorities.authority"})
     Optional<Member> findByEmail(String email);
+
+    /**
+     * ID로 회원을 조회합니다. 토큰 재발급에 필요한 권한을 함께 가져오며, soft delete된 회원은 제외됩니다.
+     *
+     * @param id 회원 ID
+     * @return 권한을 포함한 회원 엔티티
+     */
+    @EntityGraph(attributePaths = {"authorities", "authorities.authority"})
+    Optional<Member> findWithAuthoritiesById(String id);
 }

@@ -1,4 +1,4 @@
-package dev.choimory.member.api.auth.v1.command;
+package dev.choimory.member.api.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.hasSize;
@@ -14,7 +14,6 @@ import dev.choimory.member.api.jwt.JwtClaims;
 import dev.choimory.member.api.jwt.JwtProvider;
 import dev.choimory.member.api.jwt.TokenType;
 import dev.choimory.member.api.member.v1.command.payload.request.MemberJoinRequest;
-import dev.choimory.member.api.security.TestSecurityController;
 import java.time.Duration;
 import java.util.Set;
 import org.junit.jupiter.api.AfterEach;
@@ -34,7 +33,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.ResultActions;
 
 /**
- * 로그인 API 통합 테스트입니다. 실제 PostgreSQL과 Redis(Testcontainers)로 가입부터 로그인, 토큰 사용까지 확인합니다.
+ * 로그인 API 통합 테스트입니다. 로그인 필터가 처리하며, 실제 PostgreSQL과 Redis(Testcontainers)로 가입부터 로그인, 토큰 사용까지 확인합니다.
  */
 @Import({TestcontainersConfiguration.class, TestSecurityController.class})
 @SpringBootTest
@@ -211,23 +210,25 @@ class LoginTest {
     }
 
     /**
-     * 요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있으면 400이어야 합니다.
+     * 요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있으면 인증을 시도하지 않고 400이어야 합니다.
      *
      * @throws Exception MockMvc 수행 중 발생
      */
     @Test
     void malformedOrBlankRequestIsBadRequest() throws Exception {
-        // JSON이 아닌 본문, 빈 객체, 이메일만 있는 본문, 비밀번호가 공백인 본문으로 로그인한다.
+        // JSON이 아닌 본문, 빈 객체, 이메일만 있는 본문, 비밀번호가 공백인 본문, 빈 본문으로 로그인한다.
         for (String body : new String[] {
             "not-json", "{}", "{\"email\":\"a@a.com\"}", "{\"email\":\"a@a.com\",\"password\":\"  \"}", ""
         }) {
-            mockMvc.perform(post("/v1/auth/login")
+            mockMvc.perform(post("/v1/login")
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.code").value(400))
-                    .andExpect(jsonPath("$.name").value("BAD_REQUEST"));
+                    .andExpect(jsonPath("$.name").value("BAD_REQUEST"))
+                    .andExpect(jsonPath("$.data").doesNotExist());
         }
+        assertThat(redisTemplate.keys("refresh:*")).isEmpty();
     }
 
     /**
@@ -237,7 +238,7 @@ class LoginTest {
      */
     @Test
     void getOnLoginPathIsUnauthorized() throws Exception {
-        mockMvc.perform(get("/v1/auth/login")).andExpect(status().isUnauthorized());
+        mockMvc.perform(get("/v1/login")).andExpect(status().isUnauthorized());
     }
 
     /**
@@ -268,7 +269,7 @@ class LoginTest {
      * @throws Exception MockMvc 수행 중 발생
      */
     private ResultActions login(String email, String password) throws Exception {
-        return mockMvc.perform(post("/v1/auth/login")
+        return mockMvc.perform(post("/v1/login")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(java.util.Map.of("email", email, "password", password))));
     }

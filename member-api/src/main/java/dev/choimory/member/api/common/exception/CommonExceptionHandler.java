@@ -7,6 +7,7 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -59,6 +60,23 @@ public class CommonExceptionHandler {
 
         // 예외에 지정된 HTTP 상태로 응답한다.
         return new ResponseEntity<>(response, e.getStatus());
+    }
+
+    /**
+     * 읽을 수 없는 요청 본문(JSON 형식이 아니거나 필드 타입이 맞지 않음)을 잘못된 요청 응답으로 변환합니다.
+     * 처리하지 않으면 일반 예외 핸들러에 걸려 500이 됩니다.
+     *
+     * @param e 요청 본문을 읽지 못한 예외
+     * @return 잘못된 요청 응답
+     */
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public CommonResponse<String> httpMessageNotReadableException(HttpMessageNotReadableException e) {
+        // 잘못된 요청 응답으로 변환한다. 본문 내용은 응답에 담지 않는다.
+        return new CommonResponse<>(
+                HttpStatus.BAD_REQUEST.value(),
+                HttpStatus.BAD_REQUEST.name(),
+                HttpStatus.BAD_REQUEST.getReasonPhrase());
     }
 
     /**

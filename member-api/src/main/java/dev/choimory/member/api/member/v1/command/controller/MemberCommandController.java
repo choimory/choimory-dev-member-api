@@ -1,7 +1,9 @@
 package dev.choimory.member.api.member.v1.command.controller;
 
 import dev.choimory.member.api.member.v1.command.payload.request.MemberJoinRequest;
+import dev.choimory.member.api.member.v1.command.payload.request.MemberReissueRequest;
 import dev.choimory.member.api.member.v1.command.payload.response.MemberJoinResponse;
+import dev.choimory.member.api.member.v1.command.payload.response.MemberTokenResponse;
 import dev.choimory.member.api.member.v1.command.service.MemberCommandService;
 import dev.choimory.member.domain.common.command.response.CommonResponse;
 import jakarta.validation.Valid;
@@ -37,5 +39,20 @@ public class MemberCommandController {
                 HttpStatus.CREATED.name(),
                 HttpStatus.CREATED.getReasonPhrase(),
                 memberCommandService.join(request));
+    }
+
+    /**
+     * Refresh Token으로 Access Token과 Refresh Token을 다시 발급합니다.
+     *
+     * @param request 재발급 요청
+     * @return 새로 발급된 토큰
+     */
+    @PostMapping("/reissue")
+    public CommonResponse<MemberTokenResponse> reissue(@Valid @RequestBody final MemberReissueRequest request) {
+        return new CommonResponse<>(
+                HttpStatus.OK.value(),
+                HttpStatus.OK.name(),
+                HttpStatus.OK.getReasonPhrase(),
+                memberCommandService.reissue(request));
     }
 }

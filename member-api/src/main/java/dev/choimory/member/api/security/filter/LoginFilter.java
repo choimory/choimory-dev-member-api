@@ -1,8 +1,8 @@
 package dev.choimory.member.api.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.choimory.member.api.auth.v1.command.payload.request.LoginRequest;
 import dev.choimory.member.api.security.handler.SecurityResponseWriter;
+import dev.choimory.member.api.security.payload.request.LoginRequest;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -17,7 +17,7 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 /**
- * 로그인 필터입니다. {@code POST /v1/auth/login}의 JSON 본문({@code {email, password}})을 읽어 인증합니다.
+ * 로그인 필터입니다. {@code POST /v1/login}의 JSON 본문({@code {email, password}})을 읽어 인증합니다.
  * 성공과 실패 처리는 각각 {@link AuthenticationSuccessHandler}, {@link AuthenticationFailureHandler}가 합니다.
  * 요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있으면 인증을 시도하지 않고 400으로 응답합니다.
  * 스프링 빈으로 등록하면 서블릿 필터로 한 번 더 등록되므로 SecurityConfig에서 직접 생성합니다.
@@ -25,7 +25,7 @@ import org.springframework.security.web.servlet.util.matcher.PathPatternRequestM
 public class LoginFilter extends AbstractAuthenticationProcessingFilter {
 
     /** 로그인 주소입니다. */
-    public static final String LOGIN_PATH = "/v1/auth/login";
+    public static final String LOGIN_PATH = "/v1/login";
 
     private final ObjectMapper objectMapper; // JSON 변환
     private final SecurityResponseWriter securityResponseWriter; // 공통 응답 작성

@@ -1,4 +1,4 @@
-package dev.choimory.member.api.auth.v1.command.payload.request;
+package dev.choimory.member.api.security.payload.request;
 
 import lombok.Builder;
 

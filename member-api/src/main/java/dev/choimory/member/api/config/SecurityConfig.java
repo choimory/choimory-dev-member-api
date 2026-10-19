@@ -31,7 +31,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 /**
  * Spring Security 설정입니다.
  * 토큰 기반 API이므로 세션과 CSRF, 폼 로그인, HTTP Basic을 사용하지 않습니다.
- * JWT 인증 필터와 로그인 필터를 연결하며, 로그아웃 필터는 이후 단계에서 추가합니다.
+ * JWT 인증 필터와 로그인 필터를 연결하며, 로그아웃은 이후 단계에서 추가합니다. 토큰 재발급은 member 컨트롤러가 처리합니다.
  */
 @Configuration
 @EnableWebSecurity
@@ -81,9 +81,10 @@ public class SecurityConfig {
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // TODO 클라이언트가 정해지면 CORS를 설정한다.
-                // 회원가입과 로그인만 인증 없이 허용하고 나머지는 인증을 요구한다.
+                // 회원가입, 로그인, 토큰 재발급만 인증 없이 허용하고 나머지는 인증을 요구한다.
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.POST, "/v1/member/join", LoginFilter.LOGIN_PATH)
+                        .requestMatchers(
+                                HttpMethod.POST, "/v1/member/join", LoginFilter.LOGIN_PATH, "/v1/member/reissue")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
@@ -93,7 +94,7 @@ public class SecurityConfig {
                         .accessDeniedHandler(accessDeniedHandler))
                 // Access Token을 검증해 인증 정보를 채운다. 빈으로 등록하면 서블릿 필터로 한 번 더 등록되어 직접 생성한다.
                 .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
-                // 로그인 요청(POST /v1/auth/login)을 처리한다. JWT 필터와 같은 이유로 직접 생성한다.
+                // 로그인 요청(POST /v1/login)을 처리한다. JWT 필터와 같은 이유로 직접 생성한다.
                 .addFilterAfter(
                         new LoginFilter(
                                 authenticationManager(),

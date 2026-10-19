@@ -150,11 +150,11 @@ public class JwtProvider {
     }
 
     /**
-     * 잘못된 토큰 예외를 생성합니다.
+     * 잘못된 토큰 예외를 생성합니다. 서명 오류, 종류 불일치, 저장되지 않은 Refresh Token 등에 공통으로 사용합니다.
      *
      * @return 401 공통 예외
      */
-    private CommonException invalidToken() {
+    public static CommonException invalidToken() {
         return new CommonException(HttpStatus.UNAUTHORIZED, 401, "INVALID_TOKEN", "유효하지 않은 토큰입니다.");
     }
 }

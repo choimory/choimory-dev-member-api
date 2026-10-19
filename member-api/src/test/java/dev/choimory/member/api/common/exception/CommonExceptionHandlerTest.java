@@ -152,6 +152,21 @@ class CommonExceptionHandlerTest {
     }
 
     /**
+     * JSON이 아닌 요청 본문은 500이 아니라 400 응답으로 변환됩니다.
+     *
+     * @throws Exception MockMvc 수행 중 발생
+     */
+    @Test
+    void unreadableBodyBecomesBadRequest() throws Exception {
+        // JSON이 아닌 본문을 보내면 400 응답이어야 한다.
+        mockMvc.perform(post("/valid").contentType(MediaType.APPLICATION_JSON).content("not-json"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value(400))
+                .andExpect(jsonPath("$.name").value("BAD_REQUEST"))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    /**
      * 접근 거부 예외는 500이 아니라 403 응답으로 변환됩니다.
      *
      * @throws Exception MockMvc 수행 중 발생

@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "choimory-dev-member-api - auth",
+    "title": "choimory-dev-member-api - jwt",
     "version": "v1",
-    "description": "인증(auth) 도메인 API 명세서입니다.\n\n- 모든 응답은 공통 응답 객체(`code`, `name`, `message`, `data`)로 내려갑니다.\n- 토큰은 `Authorization: Bearer {accessToken}` 헤더로 보냅니다.\n- Access Token은 30분, Refresh Token은 14일 동안 유효합니다.\n- 로그인은 Spring Security 필터가 처리합니다."
+    "description": "JWT(jwt) 도메인 API 명세서입니다. 로그인(토큰 발급)을 다룹니다. 토큰 재발급은 회원 API 명세서(`/v1/member/reissue`)에 있습니다.\n\n- 모든 응답은 공통 응답 객체(`code`, `name`, `message`, `data`)로 내려갑니다.\n- 토큰은 `Authorization: Bearer {accessToken}` 헤더로 보냅니다.\n- Access Token은 30분, Refresh Token은 14일 동안 유효합니다.\n- 로그인(`/v1/login`)은 Spring Security 필터가 처리하며 인증 없이 호출할 수 있습니다."
   },
   "servers": [
     {
@@ -13,19 +13,19 @@
   ],
   "tags": [
     {
-      "name": "auth",
-      "description": "인증"
+      "name": "jwt",
+      "description": "토큰 발급"
     }
   ],
   "paths": {
-    "/v1/auth/login": {
+    "/v1/login": {
       "post": {
         "tags": [
-          "auth"
+          "jwt"
         ],
         "operationId": "login",
-        "summary": "로그인",
-        "description": "이메일과 비밀번호로 로그인해 Access Token과 Refresh Token을 발급합니다.\n\n- 상태가 `ACTIVATE`인 회원만 로그인할 수 있습니다.\n- 없는 이메일, 틀린 비밀번호, 로그인할 수 없는 상태(가입 대기, 비활성, 정지), 탈퇴한 회원은 구분하지 않고 모두 같은 401 응답을 받습니다. 계정 정보가 노출되지 않도록 하기 위해서입니다.\n- 요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있으면 400입니다. 비밀번호 규칙은 노출하지 않으므로 형식 검증은 하지 않습니다.\n- Refresh Token은 서버(Redis)에도 저장되며 로그인할 때마다 새로 발급됩니다. 여러 기기에서 동시에 로그인할 수 있습니다.",
+        "summary": "로그인(토큰 발급)",
+        "description": "이메일과 비밀번호로 로그인해 Access Token과 Refresh Token을 발급합니다. 로그인은 Spring Security 필터가 처리합니다.\n\n- 상태가 `ACTIVATE`인 회원만 로그인할 수 있습니다.\n- 없는 이메일, 틀린 비밀번호, 로그인할 수 없는 상태(가입 대기, 비활성, 정지), 탈퇴한 회원은 구분하지 않고 모두 같은 401 응답을 받습니다. 계정 정보가 노출되지 않도록 하기 위해서입니다.\n- 요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있으면 인증을 시도하지 않고 400이며 data가 없습니다. 비밀번호 규칙은 노출하지 않으므로 형식 검증은 하지 않습니다.\n- Refresh Token은 서버(Redis)에도 저장되며 로그인할 때마다 새로 발급됩니다. 여러 기기에서 동시에 로그인할 수 있습니다.",
         "requestBody": {
           "required": true,
           "content": {
@@ -51,7 +51,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CommonResponseLoginResponse"
+                  "$ref": "#/components/schemas/CommonResponseMemberTokenResponse"
                 },
                 "examples": {
                   "성공": {
@@ -74,7 +74,7 @@
             }
           },
           "400": {
-            "description": "요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있음",
+            "description": "요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있음. 인증을 시도하지 않고 data 없이 응답합니다.",
             "content": {
               "application/json": {
                 "schema": {
@@ -90,8 +90,17 @@
                       "data": null
                     }
                   },
-                  "비밀번호 누락": {
-                    "summary": "비밀번호가 없거나 공백",
+                  "필드 누락": {
+                    "summary": "이메일 또는 비밀번호가 없는 요청 ({})",
+                    "value": {
+                      "code": 400,
+                      "name": "BAD_REQUEST",
+                      "message": "Bad Request",
+                      "data": null
+                    }
+                  },
+                  "비밀번호 공백": {
+                    "summary": "비밀번호가 공백인 요청",
                     "value": {
                       "code": 400,
                       "name": "BAD_REQUEST",
@@ -161,7 +170,7 @@
         "properties": {
           "email": {
             "type": "string",
-            "description": "가입한 이메일",
+            "description": "가입한 이메일. 비어 있거나 공백이면 400",
             "example": "choi@example.com"
           },
           "password": {
@@ -171,9 +180,35 @@
           }
         }
       },
-      "LoginResponse": {
+      "CommonResponseError": {
         "type": "object",
-        "description": "로그인 응답",
+        "description": "오류 응답 (data 없음)",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "응답 코드",
+            "example": 401
+          },
+          "name": {
+            "type": "string",
+            "description": "오류 코드명",
+            "example": "UNAUTHORIZED"
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 메시지",
+            "example": "Unauthorized"
+          },
+          "data": {
+            "type": "null",
+            "description": "데이터 없음",
+            "example": null
+          }
+        }
+      },
+      "MemberTokenResponse": {
+        "type": "object",
+        "description": "토큰 발급 응답. 로그인과 재발급이 같은 모양입니다.",
         "properties": {
           "accessToken": {
             "type": "string",
@@ -204,9 +239,9 @@
           }
         }
       },
-      "CommonResponseLoginResponse": {
+      "CommonResponseMemberTokenResponse": {
         "type": "object",
-        "description": "성공 응답 (data: 로그인 결과)",
+        "description": "성공 응답 (data: 발급된 토큰)",
         "properties": {
           "code": {
             "type": "integer",
@@ -224,33 +259,7 @@
             "example": "OK"
           },
           "data": {
-            "$ref": "#/components/schemas/LoginResponse"
-          }
-        }
-      },
-      "CommonResponseError": {
-        "type": "object",
-        "description": "오류 응답 (data 없음)",
-        "properties": {
-          "code": {
-            "type": "integer",
-            "description": "응답 코드",
-            "example": 401
-          },
-          "name": {
-            "type": "string",
-            "description": "오류 코드명",
-            "example": "UNAUTHORIZED"
-          },
-          "message": {
-            "type": "string",
-            "description": "오류 메시지",
-            "example": "Unauthorized"
-          },
-          "data": {
-            "type": "null",
-            "description": "데이터 없음",
-            "example": null
+            "$ref": "#/components/schemas/MemberTokenResponse"
           }
         }
       }

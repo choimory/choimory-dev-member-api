@@ -98,13 +98,31 @@ public class MemberCommandHandler {
      * @return 권한을 포함한 회원 DTO, 없거나 삭제된 회원이면 비어 있음
      */
     public Optional<MemberDto> findByEmail(String email) {
-        return memberRepository
-                .findByEmail(email)
-                .map(member -> MemberDto.fromWithoutChildren(member).toBuilder()
-                        .authorities(member.getAuthorities().stream()
-                                .map(MemberAuthorityDto::from)
-                                .toList())
-                        .build());
+        return memberRepository.findByEmail(email).map(this::toDtoWithAuthorities);
+    }
+
+    /**
+     * ID로 회원을 조회합니다. 토큰 재발급에 필요한 권한만 포함하고 이미지, 정지 이력, 약관은 조회하지 않아 null입니다.
+     *
+     * @param id 회원 ID
+     * @return 권한을 포함한 회원 DTO, 없거나 삭제된 회원이면 비어 있음
+     */
+    public Optional<MemberDto> findById(String id) {
+        return memberRepository.findWithAuthoritiesById(id).map(this::toDtoWithAuthorities);
+    }
+
+    /**
+     * 회원 엔티티를 권한만 포함한 DTO로 변환합니다.
+     *
+     * @param member 권한을 함께 조회한 회원 엔티티
+     * @return 권한을 포함한 회원 DTO
+     */
+    private MemberDto toDtoWithAuthorities(Member member) {
+        return MemberDto.fromWithoutChildren(member).toBuilder()
+                .authorities(member.getAuthorities().stream()
+                        .map(MemberAuthorityDto::from)
+                        .toList())
+                .build();
     }
 
     /**
