@@ -1,9 +1,9 @@
 package dev.choimory.member.api.member.v1.command.service;
 
 import dev.choimory.member.api.authority.v1.command.handler.AuthorityCommandHandler;
-import dev.choimory.member.api.jwt.JwtClaims;
-import dev.choimory.member.api.jwt.JwtProvider;
 import dev.choimory.member.api.jwt.v1.command.handler.JwtCommandHandler;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtClaims;
+import dev.choimory.member.api.jwt.v1.command.util.JwtProvider;
 import dev.choimory.member.api.member.v1.command.handler.MemberCommandHandler;
 import dev.choimory.member.api.member.v1.command.payload.request.MemberJoinRequest;
 import dev.choimory.member.api.member.v1.command.payload.request.MemberReissueRequest;

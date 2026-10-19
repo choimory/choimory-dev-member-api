@@ -62,4 +62,27 @@ class JwtRepositoryTest {
 
         jwtRepository.deleteRefreshToken("repo-member-3", "jti-ttl");
     }
+
+    /**
+     * 블랙리스트에 올린 Access Token은 조회되고, 다른 jti와 구분되며, TTL이 설정되어 만료되면 사라지는 값이어야 합니다.
+     */
+    @Test
+    void blacklistSavesWithTimeToLive() {
+        // 올리지 않은 토큰은 블랙리스트에 없어야 한다.
+        assertThat(jwtRepository.existsBlacklist("jti-black")).isFalse();
+
+        // 30분 TTL로 올리면 해당 jti만 블랙리스트에 있어야 한다.
+        jwtRepository.saveBlacklist("jti-black", Duration.ofMinutes(30));
+        assertThat(jwtRepository.existsBlacklist("jti-black")).isTrue();
+        assertThat(jwtRepository.existsBlacklist("jti-other")).isFalse();
+
+        // 키 형식은 blacklist:{jti}이고 TTL이 30분 안팎이어야 한다.
+        Long ttl = redisTemplate.getExpire("blacklist:jti-black");
+        assertThat(ttl)
+                .isBetween(
+                        Duration.ofMinutes(30).getSeconds() - 5,
+                        Duration.ofMinutes(30).getSeconds());
+
+        redisTemplate.delete("blacklist:jti-black");
+    }
 }

@@ -1,5 +1,6 @@
-package dev.choimory.member.api.jwt;
+package dev.choimory.member.api.jwt.v1.command.payload.dto;
 
+import dev.choimory.member.api.jwt.v1.command.payload.type.TokenType;
 import java.time.Instant;
 import java.util.List;
 import lombok.Builder;

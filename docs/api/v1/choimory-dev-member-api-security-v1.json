@@ -1,9 +1,9 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "choimory-dev-member-api - jwt",
+    "title": "choimory-dev-member-api - security",
     "version": "v1",
-    "description": "JWT(jwt) 도메인 API 명세서입니다. 로그인(토큰 발급)을 다룹니다. 토큰 재발급은 회원 API 명세서(`/v1/member/reissue`)에 있습니다.\n\n- 모든 응답은 공통 응답 객체(`code`, `name`, `message`, `data`)로 내려갑니다.\n- 토큰은 `Authorization: Bearer {accessToken}` 헤더로 보냅니다.\n- Access Token은 30분, Refresh Token은 14일 동안 유효합니다.\n- 로그인(`/v1/login`)은 Spring Security 필터가 처리하며 인증 없이 호출할 수 있습니다."
+    "description": "보안(security) API 명세서입니다. Spring Security 필터가 처리하는 로그인(토큰 발급)과 로그아웃을 다룹니다. 토큰 재발급은 컨트롤러가 처리하므로 회원 API 명세서(`/v1/member/reissue`)에 있습니다.\n\n- 모든 응답은 공통 응답 객체(`code`, `name`, `message`, `data`)로 내려갑니다.\n- 토큰은 `Authorization: Bearer {accessToken}` 헤더로 보냅니다.\n- Access Token은 30분, Refresh Token은 14일 동안 유효합니다.\n- 로그인(`/v1/login`)과 로그아웃(`/v1/logout`)은 인증 없이 호출할 수 있습니다."
   },
   "servers": [
     {
@@ -13,15 +13,15 @@
   ],
   "tags": [
     {
-      "name": "jwt",
-      "description": "토큰 발급"
+      "name": "security",
+      "description": "로그인과 로그아웃 (Security 필터)"
     }
   ],
   "paths": {
     "/v1/login": {
       "post": {
         "tags": [
-          "jwt"
+          "security"
         ],
         "operationId": "login",
         "summary": "로그인(토큰 발급)",
@@ -156,6 +156,159 @@
           }
         }
       }
+    },
+    "/v1/logout": {
+      "post": {
+        "tags": [
+          "security"
+        ],
+        "operationId": "logout",
+        "summary": "로그아웃",
+        "description": "Refresh Token을 폐기하고, 함께 보낸 유효한 Access Token은 만료 전에도 쓰지 못하게 블랙리스트에 올립니다. 로그아웃은 Spring Security 필터가 처리하며 인증 없이 호출할 수 있습니다.\n\n- 인증 기준은 본문의 Refresh Token입니다. `Authorization: Bearer {accessToken}` 헤더(파라미터 `Authorization`)는 선택이며, Access Token이 없거나 이미 만료되었거나 잘못되었어도 로그아웃할 수 있습니다.\n- Refresh Token과 같은 회원의 유효한 Access Token을 함께 보내면 남은 만료 시간 동안 블랙리스트에 올라 그 이후 요청이 `INVALID_TOKEN`(401)이 됩니다. 다른 회원의 Access Token은 블랙리스트에 오르지 않습니다.\n- 이미 폐기된 Refresh Token으로 다시 로그아웃해도 200입니다. (멱등)\n- 다른 기기의 Refresh Token은 영향을 받지 않습니다.\n- 로그아웃한 Refresh Token으로는 재발급할 수 없습니다.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogoutRequest"
+              },
+              "examples": {
+                "정상 요청": {
+                  "summary": "폐기할 Refresh Token. Authorization 헤더는 선택",
+                  "value": {
+                    "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk5ZjNhMi03YzFlLTdiNTItOWQzYS00ZjZlOGExYjJjM2QiLCJqdGkiOiI5YTFiMmMzZC00ZTVmLTZhN2ItOGM5ZC0wZTFmMmEzYjRjNWQiLCJpc3MiOiJjaG9pbW9yeS1kZXYtbWVtYmVyLWFwaSIsInR5cGUiOiJyZWZyZXNoIn0.c2lnbmF0dXJlLWV4YW1wbGU"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "로그아웃 성공. Refresh Token이 폐기되었습니다. 이미 폐기된 토큰이어도 같은 응답입니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseEmpty"
+                },
+                "examples": {
+                  "성공": {
+                    "summary": "로그아웃 성공",
+                    "value": {
+                      "code": 200,
+                      "name": "OK",
+                      "message": "OK",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 본문이 JSON이 아니거나 Refresh Token이 비어 있음. data 없이 응답합니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseError"
+                },
+                "examples": {
+                  "JSON이 아닌 본문": {
+                    "summary": "JSON이 아닌 요청 본문 (예: not-json)",
+                    "value": {
+                      "code": 400,
+                      "name": "BAD_REQUEST",
+                      "message": "Bad Request",
+                      "data": null
+                    }
+                  },
+                  "Refresh Token 누락": {
+                    "summary": "refreshToken이 없거나 공백인 요청",
+                    "value": {
+                      "code": 400,
+                      "name": "BAD_REQUEST",
+                      "message": "Bad Request",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Refresh Token이 유효하지 않음. 만료는 TOKEN_EXPIRED, 서명 오류나 Access Token을 보낸 경우는 INVALID_TOKEN입니다. 이 경우 아무것도 폐기되지 않습니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseError"
+                },
+                "examples": {
+                  "만료된 토큰": {
+                    "summary": "Refresh Token 만료",
+                    "value": {
+                      "code": 401,
+                      "name": "TOKEN_EXPIRED",
+                      "message": "만료된 토큰입니다.",
+                      "data": null
+                    }
+                  },
+                  "유효하지 않은 토큰": {
+                    "summary": "서명 오류, Access Token을 Refresh Token 자리에 보냄",
+                    "value": {
+                      "code": 401,
+                      "name": "INVALID_TOKEN",
+                      "message": "유효하지 않은 토큰입니다.",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류. Redis 장애로 토큰을 폐기하지 못한 경우입니다. 내부 정보 노출을 막기 위해 원인은 응답에 담지 않습니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseError"
+                },
+                "examples": {
+                  "서버 오류": {
+                    "summary": "Redis 연결 실패 등",
+                    "value": {
+                      "code": 500,
+                      "name": "INTERNAL_SERVER_ERROR",
+                      "message": "Internal Server Error",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "description": "Bearer 방식의 Access Token (선택). 같은 회원의 유효한 Access Token을 보내면 로그아웃과 함께 블랙리스트에 올라 만료 전에도 쓸 수 없게 됩니다. 보내지 않거나 만료되었거나 잘못된 토큰이어도 로그아웃은 처리되며, 다른 회원의 토큰은 블랙리스트에 오르지 않습니다.",
+            "schema": {
+              "type": "string",
+              "pattern": "^Bearer .+$"
+            },
+            "examples": {
+              "Access Token과 함께": {
+                "summary": "Access Token도 함께 폐기",
+                "value": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk5ZjNhMi03YzFlLTdiNTItOWQzYS00ZjZlOGExYjJjM2QiLCJqdGkiOiI3ZjJlOWMxYS0zYjRkLTRlNmYtOGE1Yy0xZDJlM2Y0YTViNmMiLCJpc3MiOiJjaG9pbW9yeS1kZXYtbWVtYmVyLWFwaSIsInR5cGUiOiJhY2Nlc3MiLCJhdXRob3JpdGllcyI6WyJNRU1CRVIiXX0.c2lnbmF0dXJlLWV4YW1wbGU"
+              },
+              "헤더 없음": {
+                "summary": "Access Token이 만료되어 헤더를 생략하고 Refresh Token만 보냄 (이 파라미터를 보내지 않음)"
+              }
+            }
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -260,6 +413,46 @@
           },
           "data": {
             "$ref": "#/components/schemas/MemberTokenResponse"
+          }
+        }
+      },
+      "LogoutRequest": {
+        "type": "object",
+        "description": "로그아웃 요청",
+        "required": [
+          "refreshToken"
+        ],
+        "properties": {
+          "refreshToken": {
+            "type": "string",
+            "description": "폐기할 Refresh Token. 비어 있거나 공백이면 400",
+            "example": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk5ZjNhMi03YzFlLTdiNTItOWQzYS00ZjZlOGExYjJjM2QiLCJqdGkiOiI5YTFiMmMzZC00ZTVmLTZhN2ItOGM5ZC0wZTFmMmEzYjRjNWQiLCJpc3MiOiJjaG9pbW9yeS1kZXYtbWVtYmVyLWFwaSIsInR5cGUiOiJyZWZyZXNoIn0.c2lnbmF0dXJlLWV4YW1wbGU"
+          }
+        }
+      },
+      "CommonResponseEmpty": {
+        "type": "object",
+        "description": "성공 응답 (data 없음)",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "응답 코드",
+            "example": 200
+          },
+          "name": {
+            "type": "string",
+            "description": "응답 코드명",
+            "example": "OK"
+          },
+          "message": {
+            "type": "string",
+            "description": "응답 메시지",
+            "example": "OK"
+          },
+          "data": {
+            "type": "null",
+            "description": "데이터 없음",
+            "example": null
           }
         }
       }

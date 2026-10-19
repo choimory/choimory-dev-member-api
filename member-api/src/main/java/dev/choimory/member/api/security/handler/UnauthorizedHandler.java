@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class CommonAuthenticationEntryPoint implements AuthenticationEntryPoint {
+public class UnauthorizedHandler implements AuthenticationEntryPoint {
 
     private final SecurityResponseWriter securityResponseWriter; // 공통 응답 작성
 

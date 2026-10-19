@@ -6,9 +6,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.choimory.member.api.common.exception.CommonException;
 import dev.choimory.member.api.security.filter.JwtAuthenticationFilter;
-import dev.choimory.member.api.security.handler.CommonAccessDeniedHandler;
-import dev.choimory.member.api.security.handler.CommonAuthenticationEntryPoint;
+import dev.choimory.member.api.security.handler.ForbiddenHandler;
 import dev.choimory.member.api.security.handler.SecurityResponseWriter;
+import dev.choimory.member.api.security.handler.UnauthorizedHandler;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -33,7 +33,7 @@ class SecurityHandlersTest {
     void entryPointWritesUnauthorizedWithoutReason() throws Exception {
         // 인증 예외로 진입점을 호출한다.
         MockHttpServletResponse response = new MockHttpServletResponse();
-        new CommonAuthenticationEntryPoint(writer)
+        new UnauthorizedHandler(writer)
                 .commence(new MockHttpServletRequest(), response, new BadCredentialsException("secret reason"));
 
         // 401과 공통 응답 JSON이어야 하며 예외 메시지가 노출되면 안 된다.
@@ -61,7 +61,7 @@ class SecurityHandlersTest {
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         // 진입점을 호출한다.
-        new CommonAuthenticationEntryPoint(writer).commence(request, response, new BadCredentialsException("x"));
+        new UnauthorizedHandler(writer).commence(request, response, new BadCredentialsException("x"));
 
         // 오류 종류와 메시지가 응답에 담겨야 한다.
         assertThat(response.getStatus()).isEqualTo(401);
@@ -80,7 +80,7 @@ class SecurityHandlersTest {
     void accessDeniedHandlerWritesForbidden() throws Exception {
         // 접근 거부 예외로 핸들러를 호출한다.
         MockHttpServletResponse response = new MockHttpServletResponse();
-        new CommonAccessDeniedHandler(writer)
+        new ForbiddenHandler(writer)
                 .handle(new MockHttpServletRequest(), response, new AccessDeniedException("denied"));
 
         // 403과 공통 응답 JSON이어야 한다.

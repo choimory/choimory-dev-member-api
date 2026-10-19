@@ -1,15 +1,17 @@
 package dev.choimory.member.api.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.choimory.member.api.jwt.JwtProperties;
-import dev.choimory.member.api.jwt.JwtProvider;
+import dev.choimory.member.api.jwt.v1.command.handler.JwtCommandHandler;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtProperties;
+import dev.choimory.member.api.jwt.v1.command.util.JwtProvider;
 import dev.choimory.member.api.security.filter.JwtAuthenticationFilter;
 import dev.choimory.member.api.security.filter.LoginFilter;
-import dev.choimory.member.api.security.handler.CommonAccessDeniedHandler;
-import dev.choimory.member.api.security.handler.CommonAuthenticationEntryPoint;
+import dev.choimory.member.api.security.filter.LogoutFilter;
+import dev.choimory.member.api.security.handler.ForbiddenHandler;
 import dev.choimory.member.api.security.handler.LoginFailureHandler;
 import dev.choimory.member.api.security.handler.LoginSuccessHandler;
 import dev.choimory.member.api.security.handler.SecurityResponseWriter;
+import dev.choimory.member.api.security.handler.UnauthorizedHandler;
 import dev.choimory.member.api.security.user.MemberUserDetailsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -31,7 +33,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 /**
  * Spring Security 설정입니다.
  * 토큰 기반 API이므로 세션과 CSRF, 폼 로그인, HTTP Basic을 사용하지 않습니다.
- * JWT 인증 필터와 로그인 필터를 연결하며, 로그아웃은 이후 단계에서 추가합니다. 토큰 재발급은 member 컨트롤러가 처리합니다.
+ * JWT 인증 필터와 로그인, 로그아웃 필터를 연결합니다. 토큰 재발급은 member 컨트롤러가 처리합니다.
  */
 @Configuration
 @EnableWebSecurity
@@ -40,9 +42,10 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
 
-    private final CommonAuthenticationEntryPoint authenticationEntryPoint; // 인증 실패(401) 응답
-    private final CommonAccessDeniedHandler accessDeniedHandler; // 권한 없음(403) 응답
+    private final UnauthorizedHandler unauthorizedHandler; // 인증 실패(401) 응답
+    private final ForbiddenHandler forbiddenHandler; // 권한 없음(403) 응답
     private final JwtProvider jwtProvider; // JWT 검증
+    private final JwtCommandHandler jwtCommandHandler; // 블랙리스트 확인, 로그아웃 처리
     private final MemberUserDetailsService memberUserDetailsService; // 로그인 인증용 회원 조회
     private final PasswordEncoder passwordEncoder; // 비밀번호 검증
     private final LoginSuccessHandler loginSuccessHandler; // 로그인 성공(토큰 발급) 응답
@@ -84,16 +87,21 @@ public class SecurityConfig {
                 // 회원가입, 로그인, 토큰 재발급만 인증 없이 허용하고 나머지는 인증을 요구한다.
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(
-                                HttpMethod.POST, "/v1/member/join", LoginFilter.LOGIN_PATH, "/v1/member/reissue")
+                                HttpMethod.POST,
+                                "/v1/member/join",
+                                LoginFilter.LOGIN_PATH,
+                                LogoutFilter.LOGOUT_PATH,
+                                "/v1/member/reissue")
                         .permitAll()
                         .anyRequest()
                         .authenticated())
                 // 필터 단계의 인증 실패와 권한 없음을 공통 응답 JSON으로 내려준다.
-                .exceptionHandling(exception -> exception
-                        .authenticationEntryPoint(authenticationEntryPoint)
-                        .accessDeniedHandler(accessDeniedHandler))
+                .exceptionHandling(exception ->
+                        exception.authenticationEntryPoint(unauthorizedHandler).accessDeniedHandler(forbiddenHandler))
                 // Access Token을 검증해 인증 정보를 채운다. 빈으로 등록하면 서블릿 필터로 한 번 더 등록되어 직접 생성한다.
-                .addFilterBefore(new JwtAuthenticationFilter(jwtProvider), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(
+                        new JwtAuthenticationFilter(jwtProvider, jwtCommandHandler),
+                        UsernamePasswordAuthenticationFilter.class)
                 // 로그인 요청(POST /v1/login)을 처리한다. JWT 필터와 같은 이유로 직접 생성한다.
                 .addFilterAfter(
                         new LoginFilter(
@@ -102,7 +110,10 @@ public class SecurityConfig {
                                 loginFailureHandler,
                                 objectMapper,
                                 securityResponseWriter),
-                        JwtAuthenticationFilter.class);
+                        JwtAuthenticationFilter.class)
+                // 로그아웃 요청(POST /v1/logout)을 처리한다. 인증 기준이 Refresh Token이라 로그인 필터 뒤에 둔다.
+                .addFilterAfter(
+                        new LogoutFilter(jwtCommandHandler, objectMapper, securityResponseWriter), LoginFilter.class);
         return http.build();
     }
 }

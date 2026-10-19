@@ -1,12 +1,12 @@
 package dev.choimory.member.api.jwt.v1.command.handler;
 
 import dev.choimory.member.api.common.exception.CommonException;
-import dev.choimory.member.api.jwt.IssuedToken;
-import dev.choimory.member.api.jwt.IssuedTokens;
-import dev.choimory.member.api.jwt.JwtClaims;
-import dev.choimory.member.api.jwt.JwtProvider;
-import dev.choimory.member.api.jwt.TokenType;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.IssuedToken;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.IssuedTokens;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtClaims;
+import dev.choimory.member.api.jwt.v1.command.payload.type.TokenType;
 import dev.choimory.member.api.jwt.v1.command.repository.JwtRepository;
+import dev.choimory.member.api.jwt.v1.command.util.JwtProvider;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -62,5 +62,38 @@ public class JwtCommandHandler {
             throw JwtProvider.invalidToken();
         }
         return claims;
+    }
+
+    /**
+     * 로그아웃합니다. Refresh Token을 폐기하고, 유효한 Access Token이 같은 회원의 것이면 블랙리스트에 올립니다.
+     * Refresh Token이 이미 폐기되었어도 성공으로 처리합니다. (멱등)
+     * 다른 회원의 Access Token은 블랙리스트에 올리지 않습니다.
+     *
+     * @param refreshToken Refresh Token 문자열
+     * @param accessClaims 함께 온 유효한 Access Token의 클레임, 없거나 유효하지 않으면 null
+     * @throws CommonException 만료는 TOKEN_EXPIRED, 잘못된 Refresh Token은 INVALID_TOKEN (401)
+     */
+    public void logout(String refreshToken, JwtClaims accessClaims) {
+        // Refresh Token을 검증하고 폐기한다. 이미 없어도 상관없다.
+        JwtClaims refreshClaims = jwtProvider.parse(refreshToken, TokenType.REFRESH);
+        jwtRepository.deleteRefreshToken(refreshClaims.memberId(), refreshClaims.jti());
+
+        // 같은 회원의 유효한 Access Token은 남은 만료 시간만큼 블랙리스트에 올려 쓰지 못하게 한다.
+        if (accessClaims != null && accessClaims.memberId().equals(refreshClaims.memberId())) {
+            Duration remaining = Duration.between(Instant.now(), accessClaims.expiresAt());
+            if (remaining.isPositive()) {
+                jwtRepository.saveBlacklist(accessClaims.jti(), remaining);
+            }
+        }
+    }
+
+    /**
+     * 로그아웃한(블랙리스트에 있는) Access Token인지 확인합니다.
+     *
+     * @param jti 토큰 고유 ID
+     * @return 블랙리스트에 있으면 true
+     */
+    public boolean isBlacklisted(String jti) {
+        return jwtRepository.existsBlacklist(jti);
     }
 }

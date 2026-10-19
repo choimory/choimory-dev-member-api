@@ -1,6 +1,6 @@
 package dev.choimory.member.api.security.user;
 
-import dev.choimory.member.api.jwt.JwtClaims;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtClaims;
 import dev.choimory.member.domain.authority.command.dto.MemberAuthorityDto;
 import dev.choimory.member.domain.member.command.dto.MemberDto;
 import dev.choimory.member.domain.member.command.type.MemberStatus;

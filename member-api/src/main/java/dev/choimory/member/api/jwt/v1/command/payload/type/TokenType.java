@@ -1,4 +1,4 @@
-package dev.choimory.member.api.jwt;
+package dev.choimory.member.api.jwt.v1.command.payload.type;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;

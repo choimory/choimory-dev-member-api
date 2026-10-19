@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  */
 @Component
 @RequiredArgsConstructor
-public class CommonAccessDeniedHandler implements AccessDeniedHandler {
+public class ForbiddenHandler implements AccessDeniedHandler {
 
     private final SecurityResponseWriter securityResponseWriter; // 공통 응답 작성
 
