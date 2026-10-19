@@ -26,6 +26,13 @@
   - [검증 결과](#검증-결과-1)
   - [참고](#참고-1)
   - [남은 사항](#남은-사항-1)
+- [JwtProvider와 JwtProperties 위치 이동](#jwtprovider와-jwtproperties-위치-이동)
+  - [답변](#답변-3)
+  - [검토한 내용](#검토한-내용)
+  - [결정](#결정-1)
+  - [이동 내용](#이동-내용)
+  - [검증 결과](#검증-결과-2)
+  - [참고](#참고-2)
 
 ---
 
@@ -262,3 +269,62 @@ security/
 - 마무리 작업은 말씀하실 때 진행한다: README 반영(`jwt` 도메인 구성과 `payload` 사용 방식, 로그인·로그아웃이 필터라서 컨트롤러 경로 규칙의 예외라는 점, 토큰 관련 URL, `docs/api` 구성(`member`, `security`)과 API 명세서 규칙, 환경변수), `done` 문서 작성, `calendar.md`를 DONE으로 변경
 - 약관 검증·동의 이력 저장과 이메일 인증 queue 전송은 회원가입의 TODO로 남아 있다.
 - Redis 장애 시 fail-closed 동작의 자동 테스트는 아직 없다.
+
+---
+
+# JwtProvider와 JwtProperties 위치 이동
+
+> jwtprovider는 jwt.v1.command.util에 놓으면 별론가
+>
+> properties는 yml값을 담은 데이터객체아냐? dto가 맞지 않나?
+>
+> 네 그 구조로 옮겨줘
+
+## 답변
+
+`jwt/` 루트에 남아 있던 `JwtProvider`와 `JwtProperties`를 `jwt/v1/command` 아래로 옮겼다. 이로써 `jwt/` 루트에는 파일이 없고 모든 클래스가 `v1/command` 아래에 있다.
+
+## 검토한 내용
+
+- `JwtProvider`를 `util`에 두는 것: 별로는 아니다. Spring 프로젝트에서 `JwtUtil`, `JwtProvider`를 `util` 패키지에 두는 것은 흔한 관행이다. 다만 `util`은 보통 상태 없는 정적 도우미를 뜻하는데 `JwtProvider`는 서명 키를 들고 있는 빈(`@Component`)이라는 차이가 있고, `JwtProvider`만 옮기면 `jwt/` 루트에 `JwtProperties`만 남아 어색했다.
+- `JwtProperties`를 `config` 패키지에 두는 안(제안)과 `payload/dto`에 두는 안: `JwtProperties`는 yml 값을 담는 데이터 객체이고 필드만 가진 record로 로직이 없다. 사용자가 정한 `payload`의 정의(요청·응답뿐 아니라 데이터 객체를 모두 담는 패키지)에 비추면 `payload/dto`가 맞다. `jwt` 도메인이 자기 데이터 객체를 안에 모두 갖게 되어 `config` 패키지에 jwt 전용 클래스가 흩어지지 않는다. 앞서 "`JwtProperties`는 `jwt` 패키지에 둔다"고 한 결정을 이 구조로 갱신한다.
+- "dto"는 보통 계층 사이에서 주고받는 객체를 뜻해서 설정 바인딩 객체는 이름이 조금 어색할 수 있다. 다만 `payload` 안에서 데이터 객체를 구분하는 용도로 쓰므로 문제 되지 않는다.
+
+## 결정
+
+- `JwtProvider`는 `jwt/v1/command/util`로 옮긴다.
+- `JwtProperties`는 `jwt/v1/command/payload/dto`로 옮긴다.
+
+## 이동 내용
+
+| 클래스 | 이전 | 이후 |
+|---|---|---|
+| `JwtProvider` | `jwt/` | `jwt/v1/command/util` |
+| `JwtProperties` | `jwt/` | `jwt/v1/command/payload/dto` |
+| `JwtProviderTest` | `test/.../jwt/` | `test/.../jwt/v1/command/util` |
+
+- 패키지 선언과 import를 모두 고쳤다. 같은 패키지에서 import 없이 쓰던 `JwtProvider`의 `JwtProperties`에는 import를 추가했다.
+- `SecurityConfig`, `JwtCommandHandler`, `MemberCommandService`, `JwtAuthenticationFilter`와 테스트(`MemberReissueTest`, `JwtAuthenticationFilterTest`, `LoginTest`, `LogoutTest`)의 import를 새 위치로 맞췄다.
+- 코드와 문서(`docs`)에서 옛 경로(`api.jwt.JwtProvider`, `api.jwt.JwtProperties`)는 남아 있지 않다. 동작은 바뀌지 않았다.
+
+## 검증 결과
+
+- `./gradlew clean build` 성공, `member-api` 테스트 83개, `member-domain` 테스트 107개 모두 성공
+- `spotlessApply` 적용, spotless 검사 통과
+
+## 참고
+
+- 최종 `jwt` 구조
+
+```
+jwt/v1/command/
+├── handler/JwtCommandHandler
+├── repository/JwtRepository
+├── util/JwtProvider
+└── payload/
+    ├── dto/   JwtClaims, IssuedToken, IssuedTokens, JwtProperties
+    └── type/  TokenType
+```
+
+- 앞의 "데이터 객체 위치와 핸들러 이름 변경" 섹션과 plan4.md에는 `JwtProvider`, `JwtProperties`가 `jwt/` 루트에 있다고 적혀 있다. 히스토리라서 수정하지 않았고, 이 섹션이 최종 결정이다.
+- 이 변경은 done1.md의 "최종 결과"와 README에는 이미 반영되어 있다.
