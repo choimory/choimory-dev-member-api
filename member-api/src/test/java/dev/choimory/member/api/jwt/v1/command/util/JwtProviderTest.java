@@ -1,9 +1,13 @@
-package dev.choimory.member.api.jwt;
+package dev.choimory.member.api.jwt.v1.command.util;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import dev.choimory.member.api.common.exception.CommonException;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.IssuedToken;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtClaims;
+import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtProperties;
+import dev.choimory.member.api.jwt.v1.command.payload.type.TokenType;
 import io.jsonwebtoken.security.WeakKeyException;
 import java.time.Duration;
 import java.time.Instant;
