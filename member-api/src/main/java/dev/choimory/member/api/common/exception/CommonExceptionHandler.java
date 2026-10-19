@@ -1,10 +1,12 @@
 package dev.choimory.member.api.common.exception;
 
+import dev.choimory.member.api.member.v1.command.exception.MemberDuplicateException;
 import dev.choimory.member.domain.common.command.response.CommonResponse;
 import dev.choimory.member.domain.common.command.response.CommonValidateResult;
 import jakarta.validation.ConstraintViolationException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -58,6 +60,58 @@ public class CommonExceptionHandler {
 
         // 예외에 지정된 HTTP 상태로 응답한다.
         return new ResponseEntity<>(response, e.getStatus());
+    }
+
+    /**
+     * 데이터 무결성 위반 예외를 변환합니다.
+     * 회원 이메일, 닉네임의 유니크 제약 위반(사전 검증 이후 동시 요청이 먼저 저장된 경우)은 409 응답으로 변환하고,
+     * 그 외 무결성 위반은 내부 서버 오류로 처리합니다.
+     *
+     * @param e 데이터 무결성 위반 예외
+     * @return 공통 오류 응답 엔티티
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<CommonResponse<String>> dataIntegrityViolationException(DataIntegrityViolationException e) {
+        // 위반한 제약에 해당하는 중복 예외로 변환한다.
+        String constraint = violatedConstraint(e);
+        if (MemberDuplicateException.EMAIL_CONSTRAINT.equals(constraint)) {
+            return commonException(MemberDuplicateException.email());
+        }
+        if (MemberDuplicateException.NICKNAME_CONSTRAINT.equals(constraint)) {
+            return commonException(MemberDuplicateException.nickname());
+        }
+
+        // 알 수 없는 제약 위반은 내부 서버 오류로 처리한다.
+        CommonResponse<String> response = exception(e);
+        return new ResponseEntity<>(response, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+
+    /**
+     * 예외 원인에서 위반한 제약 이름을 찾습니다.
+     *
+     * @param e 데이터 무결성 위반 예외
+     * @return 제약 이름, 찾지 못하면 null
+     */
+    private String violatedConstraint(DataIntegrityViolationException e) {
+        // Hibernate가 제공하는 제약 이름을 우선 사용한다.
+        for (Throwable cause = e; cause != null; cause = cause.getCause()) {
+            if (cause instanceof org.hibernate.exception.ConstraintViolationException violation
+                    && violation.getConstraintName() != null) {
+                return violation.getConstraintName();
+            }
+        }
+
+        // 제약 이름을 얻지 못하면 DB 오류 메시지에서 알려진 제약 이름을 찾는다.
+        String message = e.getMostSpecificCause().getMessage();
+        if (message != null) {
+            for (String constraint :
+                    List.of(MemberDuplicateException.EMAIL_CONSTRAINT, MemberDuplicateException.NICKNAME_CONSTRAINT)) {
+                if (message.contains(constraint)) {
+                    return constraint;
+                }
+            }
+        }
+        return null;
     }
 
     /**

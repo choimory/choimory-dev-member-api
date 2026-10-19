@@ -14,6 +14,7 @@ import jakarta.validation.constraints.NotBlank;
 import java.util.Set;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -151,6 +152,33 @@ class CommonExceptionHandlerTest {
     }
 
     /**
+     * 알 수 없는 제약을 위반한 데이터 무결성 예외는 500 응답으로 변환되며 예외 메시지를 노출하지 않습니다.
+     *
+     * @throws Exception MockMvc 수행 중 발생
+     */
+    @Test
+    void unknownDataIntegrityViolationBecomesInternalServerError() throws Exception {
+        // 알 수 없는 제약을 위반한 예외를 던지면 500 응답이어야 한다.
+        mockMvc.perform(get("/integrity"))
+                .andExpect(status().isInternalServerError())
+                .andExpect(jsonPath("$.code").value(500))
+                .andExpect(jsonPath("$.data").doesNotExist());
+    }
+
+    /**
+     * 이메일 유니크 제약 이름이 담긴 데이터 무결성 예외는 409 응답으로 변환됩니다.
+     *
+     * @throws Exception MockMvc 수행 중 발생
+     */
+    @Test
+    void emailConstraintViolationBecomesConflict() throws Exception {
+        // 이메일 유니크 제약을 위반한 예외를 던지면 이메일 중복 409 응답이어야 한다.
+        mockMvc.perform(get("/integrity-email"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.name").value("DUPLICATE_EMAIL"));
+    }
+
+    /**
      * 요청 본문 검증 대상 객체입니다.
      */
     record ValidRequest(@NotBlank String name) {}
@@ -189,6 +217,17 @@ class CommonExceptionHandlerTest {
             Validator validator = Validation.buildDefaultValidatorFactory().getValidator();
             Set<ConstraintViolation<ValidRequest>> violations = validator.validate(new ValidRequest(""));
             throw new ConstraintViolationException(violations);
+        }
+
+        @GetMapping("/integrity")
+        void integrity() {
+            throw new DataIntegrityViolationException("unknown constraint");
+        }
+
+        @GetMapping("/integrity-email")
+        void integrityEmail() {
+            throw new DataIntegrityViolationException(
+                    "duplicate", new RuntimeException("violates unique constraint \"uk_member_email\""));
         }
 
         @GetMapping("/auth")
