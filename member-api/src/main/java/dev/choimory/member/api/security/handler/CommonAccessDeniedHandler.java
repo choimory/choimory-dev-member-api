@@ -1,4 +1,4 @@
-package dev.choimory.member.api.common.security.handler;
+package dev.choimory.member.api.security.handler;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

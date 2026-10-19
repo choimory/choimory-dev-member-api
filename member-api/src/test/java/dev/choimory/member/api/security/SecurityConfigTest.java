@@ -1,4 +1,4 @@
-package dev.choimory.member.api.common.security;
+package dev.choimory.member.api.security;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;

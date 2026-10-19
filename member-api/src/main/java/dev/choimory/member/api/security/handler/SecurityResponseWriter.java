@@ -1,4 +1,4 @@
-package dev.choimory.member.api.common.security.handler;
+package dev.choimory.member.api.security.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.choimory.member.domain.common.command.response.CommonResponse;

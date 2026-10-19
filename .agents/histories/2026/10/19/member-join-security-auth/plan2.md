@@ -29,6 +29,12 @@
   - [auth 도메인과 ACTIVATE만 로그인](#auth-도메인과-activate만-로그인)
   - [만료 시간 30분과 14일](#만료-시간-30분과-14일)
   - [결과적으로 달라지는 점](#결과적으로-달라지는-점)
+- [SecurityConfig 위치와 handler 3개의 역할](#securityconfig-위치와-handler-3개의-역할)
+  - [답변](#답변-4)
+  - [SecurityConfig 위치 변경](#securityconfig-위치-변경)
+  - [handler 3개의 역할](#handler-3개의-역할)
+  - [JwtProperties 위치](#jwtproperties-위치)
+  - [패키지 위치 추가 변경](#패키지-위치-추가-변경)
 
 ---
 
@@ -57,13 +63,12 @@
 
 ```
 dev.choimory.member.api
-├── common/security
-│   ├── config      SecurityConfig, JwtProperties
-│   ├── jwt         JwtProvider (생성·검증·파싱)
+├── security
 │   ├── filter      JwtAuthenticationFilter, LoginFilter
 │   ├── handler     AuthenticationEntryPoint, AccessDeniedHandler, 로그인 성공/실패 핸들러, 로그아웃 핸들러
 │   └── user        MemberUserDetailsService, AuthenticatedMember(UserDetails)
-├── config          PasswordEncoderConfig (그대로)
+├── jwt             JwtProvider (생성·검증·파싱), JwtProperties
+├── config          PasswordEncoderConfig (그대로), SecurityConfig
 └── auth/v1/command   (신규 도메인) controller(reissue) → service → handler → repository(Redis)
 ```
 
@@ -247,3 +252,42 @@ Access 만료 → POST /v1/auth/reissue {refresh} → 새 Access + 새 Refresh
 - 새 파일은 대략 20개 안팎이다(`SecurityConfig`, `JwtProvider`, 필터 2개, 핸들러 여러 개, `auth` 도메인 클래스, Redis 설정, 테스트).
 - `application-redis.yml`과 환경변수 `jwt-secret`, `redis-host` 등이 필요하고, 테스트에는 Redis Testcontainers가 추가된다.
 - 기존 `MemberJoinTest`는 필터를 켠 상태로 바뀐다.
+
+---
+
+# SecurityConfig 위치와 handler 3개의 역할
+
+> 일단 security config는 common말고 config로 가야지. 그리고 security의 handler 3개는 하는 역할이 뭐야?
+
+## 답변
+
+`SecurityConfig`를 `config` 패키지로 옮기고 handler 3개의 역할을 설명했다. 이후 `plan2.md`의 구조도와 `task2.md`의 경로도 새 위치로 수정했다.
+
+## SecurityConfig 위치 변경
+
+- `SecurityConfig`를 `member-api/.../api/config/SecurityConfig.java`로 옮겼다. `JpaConfig`, `PasswordEncoderConfig`와 같은 위치이다. 패키지 선언만 바꿨고 `clean build`가 통과했다. 코드에서 옛 경로를 쓰는 곳은 없었다.
+- `SecurityConfigTest`는 패키지 이름이 아니라 동작을 검증하므로 그대로 통과한다.
+
+## handler 3개의 역할
+
+핸들러가 필요한 이유: 컨트롤러에서 난 예외는 `CommonExceptionHandler`(`@RestControllerAdvice`)가 JSON으로 바꿔 주지만, Security 필터에서 난 인증·인가 실패는 컨트롤러에 도달하기 전이라 거기에 닿지 않는다. 그대로 두면 본문이 비거나 Spring 기본 형식으로 나간다(Apidog에서 본 빈 401). 그래서 필터 단계의 실패를 `CommonResponse` JSON으로 바꿔 주는 클래스가 필요하다.
+
+| 클래스 | 하는 일 | 호출되는 때 |
+|---|---|---|
+| `CommonAuthenticationEntryPoint` | 401 응답을 JSON으로 작성 | 인증이 필요한 주소에 인증 없이(토큰 없음, 만료 등) 접근했을 때 |
+| `CommonAccessDeniedHandler` | 403 응답을 JSON으로 작성 | 인증은 됐지만 권한이 없을 때(예: `ADMIN` 전용 주소에 `MEMBER`가 접근). 지금은 `hasRole`을 쓰는 주소가 없어서 아직 발생하지 않음 |
+| `SecurityResponseWriter` | 위 둘이 공통으로 쓰는 응답 작성 도구: 상태 코드, 헤더(JSON, UTF-8), `CommonResponse` 본문을 씀 | 위 두 핸들러가 호출 |
+
+- 정확히는 Spring Security 인터페이스를 구현한 핸들러는 앞의 둘이고, `SecurityResponseWriter`는 둘이 같은 코드를 중복하지 않게 모은 도구이다.
+- 앞으로 로그인 실패 핸들러(3단계), 로그아웃 성공 핸들러(4단계)도 이 도구를 같이 쓴다.
+- 지금 `SecurityConfig`의 `exceptionHandling`에 앞의 둘이 등록돼 있다.
+
+## JwtProperties 위치
+
+`JwtProperties`(설정값 객체)는 `config`가 아니라 `jwt` 패키지에 `JwtProvider`와 함께 둔다. 2단계에서 그 위치에 만든다.
+
+## 패키지 위치 추가 변경
+
+- `common/security`를 `security`로 옮겼다. 핸들러는 `member-api/.../api/security/handler`에 있다. `common`에는 `exception`만 남는다.
+- `jwt`는 `security` 아래가 아니라 `api` 바로 아래(`dev.choimory.member.api.jwt`)에 둔다. `JwtProvider`와 `JwtProperties`를 이 패키지에 만든다.
+- 테스트도 같은 구조로 `test/.../api/security`로 옮겼고, 패키지 선언과 import를 모두 고쳤다. `clean build`가 통과했다.

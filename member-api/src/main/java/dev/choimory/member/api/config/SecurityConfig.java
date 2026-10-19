@@ -1,7 +1,7 @@
-package dev.choimory.member.api.common.security.config;
+package dev.choimory.member.api.config;
 
-import dev.choimory.member.api.common.security.handler.CommonAccessDeniedHandler;
-import dev.choimory.member.api.common.security.handler.CommonAuthenticationEntryPoint;
+import dev.choimory.member.api.security.handler.CommonAccessDeniedHandler;
+import dev.choimory.member.api.security.handler.CommonAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

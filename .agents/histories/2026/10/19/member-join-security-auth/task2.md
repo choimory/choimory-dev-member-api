@@ -45,7 +45,7 @@ plan2.md의 "남은 결정 7가지"를 추천안으로 확정하고, 1단계(Sec
 
 ### SecurityConfig
 
-- 파일: `common/security/config/SecurityConfig`
+- 파일: `config/SecurityConfig` (처음에는 `common/security/config`에 만들었다가 `JpaConfig`, `PasswordEncoderConfig`와 같은 `config` 패키지로 옮겼다)
 - CSRF, 폼 로그인, HTTP Basic, 기본 로그아웃을 끄고 세션은 stateless로 둔다. 로그아웃은 4단계에서 `logout()` 설정으로 다시 켠다.
 - `POST /v1/member/join`만 `permitAll`이고 나머지는 `authenticated()`이다. 로그인과 재발급 주소는 해당 API가 생기는 단계에서 허용에 추가한다.
 - `@EnableMethodSecurity`를 켜 두었다. 메뉴·권한 기반 동적 인가는 이번 범위가 아니다.
@@ -54,7 +54,7 @@ plan2.md의 "남은 결정 7가지"를 추천안으로 확정하고, 1단계(Sec
 
 ### 응답 핸들러
 
-- 파일: `common/security/handler`
+- 파일: `security/handler` (처음에는 `common/security/handler`에 만들었다가 `common`을 거치지 않는 `security` 패키지로 옮겼다. 테스트도 `test/.../api/security`로 옮겼다)
 - `SecurityResponseWriter`: HTTP 상태의 기본값(`code`, `name`, `message`)으로 `CommonResponse`(data 없음)를 UTF-8 JSON으로 쓴다. 필터 단계에서 발생한 예외는 `@RestControllerAdvice`에 닿지 않아서 직접 작성한다.
 - `CommonAuthenticationEntryPoint`: 인증되지 않은 요청에 401을 내려준다. 인증 실패 사유(계정 존재 여부 등)는 노출하지 않는다.
 - `CommonAccessDeniedHandler`: 인증은 되었으나 권한이 없는 요청에 403을 내려준다.
@@ -82,7 +82,7 @@ plan2.md의 "남은 결정 7가지"를 추천안으로 확정하고, 1단계(Sec
 
 ## 남은 사항
 
-- 2단계(JWT): jjwt 의존성과 `jwt-secret` 설정, `JwtProperties`, `JwtProvider`, `JwtAuthenticationFilter`, `AuthenticatedMember`
+- 2단계(JWT): jjwt 의존성과 `jwt-secret` 설정, `JwtProperties`와 `JwtProvider`(`api/jwt` 패키지), `JwtAuthenticationFilter`, `AuthenticatedMember`
 - 3단계: Redis 설정(`application-redis.yml`, 테스트용 Redis Testcontainers), 로그인 필터, `MemberUserDetailsService`, `auth` 도메인(`AuthCommandHandler`, `AuthTokenRepository`)
 - 4단계: `logout()` 설정, 핸들러, Access Token 블랙리스트
 - 5단계: 토큰 재발급 API (`POST /v1/auth/reissue`)

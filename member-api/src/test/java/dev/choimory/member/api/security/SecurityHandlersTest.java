@@ -1,12 +1,12 @@
-package dev.choimory.member.api.common.security;
+package dev.choimory.member.api.security;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dev.choimory.member.api.common.security.handler.CommonAccessDeniedHandler;
-import dev.choimory.member.api.common.security.handler.CommonAuthenticationEntryPoint;
-import dev.choimory.member.api.common.security.handler.SecurityResponseWriter;
+import dev.choimory.member.api.security.handler.CommonAccessDeniedHandler;
+import dev.choimory.member.api.security.handler.CommonAuthenticationEntryPoint;
+import dev.choimory.member.api.security.handler.SecurityResponseWriter;
 import org.junit.jupiter.api.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
