@@ -32,8 +32,8 @@
 ├── docs
 │   ├── api/v1
 │   ├── db/v1                     # 참고용 DDL, DML (앱과 테스트에서 사용하지 않는다)
-│   │   ├── v1-choimory-dev-member-ddl.sql   # 테이블 DDL (12개 테이블)
-│   │   └── v1-choimory-dev-member-dml.sql   # 초기 데이터 (현재 비어 있음)
+│   │   ├── choimory-dev-member-api-ddl-v1.sql   # 테이블 DDL (12개 테이블)
+│   │   └── choimory-dev-member-api-dml-v1.sql   # 초기 데이터 (현재 비어 있음)
 │   └── flyway/v1                 # Flyway 마이그레이션 원본
 │       └── V1__init_schema.sql   # 테이블 DDL (12개 테이블, COMMENT는 테이블별로 포함)
 ├── member-domain                 # 엔티티, DTO, enum (API 모듈과 분리된 도메인 모듈)

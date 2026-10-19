@@ -47,7 +47,7 @@ alter table member
 
 ### 참고용 DDL
 
-- `docs/db/v1/v1-choimory-dev-member-ddl.sql`은 직접 `timestamptz` 38곳으로 바꿨다.
+- `docs/db/v1/choimory-dev-member-api-ddl-v1.sql`은 직접 `timestamptz` 38곳으로 바꿨다.
 - 타입 길이가 길어져 어긋난 컬럼 정렬(`not null` 앞 공백)도 맞췄다.
 
 ## 엔티티와 DTO

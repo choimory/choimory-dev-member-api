@@ -455,7 +455,7 @@ record, `@Valid` 검증.
 
 ## authority 기본 데이터
 
-`docs/db/v1/v1-choimory-dev-member-dml.sql`은 비어 있고 "참고용이며 앱과 테스트에서 사용하지 않는다"고 되어 있다. 앱에 실제로 적용되려면 Flyway 마이그레이션 `docs/flyway/v1/V3__init_authority.sql`로 넣어야 한다. 현재 V1과 V2가 있다.
+`docs/db/v1/choimory-dev-member-api-dml-v1.sql`은 비어 있고 "참고용이며 앱과 테스트에서 사용하지 않는다"고 되어 있다. 앱에 실제로 적용되려면 Flyway 마이그레이션 `docs/flyway/v1/V3__init_authority.sql`로 넣어야 한다. 현재 V1과 V2가 있다.
 
 ### V3 내용 제안
 
@@ -481,7 +481,7 @@ on conflict (code) do nothing;
   - (2) 영향받는 테스트마다 setup에서 authority를 비운다.
 - `member-api`의 `MemberJoinTest`는 지금 직접 `MEMBER`를 insert하는데, V3가 있으면 그 insert를 빼고 seed를 쓰도록 바꾼다. `truncate`에서도 authority를 제외한다.
 - 새 테스트로 "앱 기동 후 `MEMBER`, `ADMIN` 권한이 존재한다"를 `FlywayMigrationTest`에 추가한다.
-- 참고용 DML 파일 `docs/db/v1/v1-choimory-dev-member-dml.sql`에도 같은 insert를 반영할지 정해야 한다.
+- 참고용 DML 파일 `docs/db/v1/choimory-dev-member-api-dml-v1.sql`에도 같은 insert를 반영할지 정해야 한다.
 
 ## 추가4 정해야 할 항목
 

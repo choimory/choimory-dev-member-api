@@ -20,6 +20,11 @@
   - [답변](#답변-2)
 - [동시 요청 대비 catch 유지](#동시-요청-대비-catch-유지)
   - [답변](#답변-3)
+- [회원가입 API OpenAPI 명세서 작성](#회원가입-api-openapi-명세서-작성)
+  - [답변](#답변-4)
+  - [작업 내용](#작업-내용-1)
+  - [검증](#검증)
+  - [참고](#참고)
 
 ---
 
@@ -123,7 +128,7 @@ plan1.md의 "추가3"~"추가5"에서 정한 결정을 반영했다. 파일명 �
 ## 권한 기본 데이터
 
 - `docs/flyway/v1/V3__init_authority_data.sql`: 고정 UUID v7로 `MEMBER`(회원), `ADMIN`(관리자)을 insert하고 `on conflict (code) do nothing`을 붙였다. `MODERATOR`는 넣지 않았고, menu는 메뉴가 구체화될 때 추가하기로 하고 보류했다.
-- `docs/db/v1/v1-choimory-dev-member-dml.sql`: 참고용 DML에도 같은 내용을 반영했다.
+- `docs/db/v1/choimory-dev-member-api-dml-v1.sql`: 참고용 DML에도 같은 내용을 반영했다.
 - UUID v7 값은 작업 시점의 시각으로 만든 값이며, 환경마다 같은 id가 되도록 고정했다.
 
 ## 도메인 테스트
@@ -184,3 +189,38 @@ plan1.md의 "추가3"~"추가5"에서 정한 결정을 반영했다. 파일명 �
 - `catch`를 없애면 이 예외가 일반 `Exception` 핸들러로 가서 500과 error 로그(critical 알람)가 된다. 사용자 실수에 가까운 상황이 오탐 알람이 되고, 사용자에게는 "이미 사용 중인 이메일입니다"가 아니라 서버 오류로 보인다.
 - 선택지는 `catch` 유지(약 15줄과 문자열 중복이 비용)와 제거(`join`이 단순해지지만 동시 요청이 500)였고, 알람 오탐을 줄이는 쪽인 유지를 약하게 추천했다.
 - 결정: `catch`를 유지한다. 변경 없음.
+
+---
+
+# 회원가입 API OpenAPI 명세서 작성
+
+> 아까 회원가입 api에서 까먹은거 있어. apidog에 불러올 openapi.json 파일 만들어야해
+
+## 답변
+
+`.agents/rules/back-end/api-docs.md`의 API 명세서 규칙을 회원가입 API 구현 때 빠뜨려서 추가로 작성했다. 규칙은 모든 API를 OpenAPI 3.1 JSON으로 도메인별로 작성하고, `description`에는 설명을, `example`에는 예시 값을 적으며, API마다 요청 타입별·응답 코드별 예시를 모두 작성하는 것이다.
+
+## 작업 내용
+
+- 파일: `docs/api/v1/choimory-dev-member-api-member-v1.json`
+  - 사용자가 `docs/api/v1/`의 자리표시 파일 이름을 `choimory-dev-member-api-(domain)-v1.json`으로 바꿔 두었고, 규칙 문서의 `openapi` 단어는 들어 있지 않다. 사용자가 정한 이름을 기준으로 `(domain)` 자리에 `member`를 넣었다. 빈 파일을 `git mv`로 옮겨 사용했다.
+  - 앞으로 `auth` 도메인 파일은 `choimory-dev-member-api-auth-v1.json` 형식으로 추가한다.
+- 대상 API: `POST /v1/member/join` 하나. 약관과 이메일 인증은 TODO라 넣지 않았다.
+- 구성: `info`, `servers`(`http://localhost:8080`), `tags`, `paths`, `components/schemas`
+  - 스키마: `MemberJoinRequest`, `MemberJoinResponse`, `MemberStatus`, `CommonValidateResult`, 성공·검증 실패·오류 응답 래퍼 3개
+  - `MemberJoinRequest`에는 검증 규칙을 그대로 옮겼다. 이메일 패턴, 비밀번호 8~64자와 패턴, 닉네임 `^[가-힣A-Za-z0-9]{3,15}$`, 자기소개 500자
+- 요청 예시 3개: 정상 요청, 자기소개 생략, 한글 닉네임
+- 응답 예시: 201 성공, 400 검증 실패(이메일 `a@b`, 비밀번호 `password1`, 닉네임 `a_b`), 409 이메일 중복·닉네임 중복, 500 서버 오류
+- 400 예시의 비밀번호 `rejectValue`는 예시 값이므로 마스킹하지 않고 그대로 적었다.
+- 400 예시는 직접 정한 한글 메시지가 나오는 규칙 위반으로만 구성했다. 빈 값이나 필수 필드 누락처럼 Spring 기본 메시지(`must not be blank` 등)가 나오는 경우는 서버 로케일에 따라 문구가 달라질 수 있어 넣지 않았다.
+
+## 검증
+
+- JSON 파싱과 `$ref` 8개 해석을 파이썬으로 확인했다. 끊어진 참조는 없다.
+- 요청 예시 3개가 스키마의 정규식과 길이 규칙에 맞는지 확인했다. 이때 "자기소개 생략" 예시의 닉네임 `모리`가 2자라 3자 이상 규칙에 어긋나는 것을 찾아 `최모리`로 고쳤다.
+- OpenAPI 전용 검증기는 이 환경에 없어 돌리지 못했다. Apidog 가져오기도 직접 실행하지 못했으므로 사용자가 Apidog에서 불러와 확인해야 한다.
+
+## 참고
+
+- `401`, `403` 응답은 Security 설정이 아직 없어 넣지 않았다. 로그인, 로그아웃, 재발급 API가 생기면 `auth` 도메인 파일을 추가하고, 이 파일도 Security 적용 후 필요하면 보강한다.
+- README에는 아직 반영하지 않았다. 마무리 단계에서 `docs/api` 구성과 API 명세서 작성 규칙을 같이 반영하는 것을 제안한다.
