@@ -36,11 +36,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 회원가입 API 통합 테스트입니다. 실제 PostgreSQL(Testcontainers)과 Flyway 스키마를 사용합니다.
- * Security 설정은 이후 단계에서 작성하므로 이 테스트에서는 Security 필터를 끄고 가입 흐름만 검증합니다.
+ * Security 필터를 켠 상태로 검증하므로 인증 없이 가입 주소가 열려 있는지도 함께 확인합니다.
  */
 @Import(TestcontainersConfiguration.class)
 @SpringBootTest
-@AutoConfigureMockMvc(addFilters = false)
+@AutoConfigureMockMvc
 @ActiveProfiles("local")
 class MemberJoinTest {
 
