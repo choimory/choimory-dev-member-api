@@ -34,6 +34,19 @@ public class SecurityResponseWriter {
     }
 
     /**
+     * HTTP 상태의 기본값에 데이터를 담아 공통 응답을 작성합니다.
+     *
+     * @param response HTTP 응답
+     * @param status HTTP 상태
+     * @param data 응답 데이터
+     * @param <T> 응답 데이터 타입
+     * @throws IOException 응답을 쓰지 못한 경우
+     */
+    public <T> void write(HttpServletResponse response, HttpStatus status, T data) throws IOException {
+        write(response, status, new CommonResponse<>(status.value(), status.name(), status.getReasonPhrase(), data));
+    }
+
+    /**
      * 공통 예외에 지정된 상태와 코드, 코드명, 메시지로 공통 응답(data 없음)을 작성합니다.
      *
      * @param response HTTP 응답
@@ -53,10 +66,10 @@ public class SecurityResponseWriter {
      * @param response HTTP 응답
      * @param status HTTP 상태
      * @param body 응답 본문
+     * @param <T> 응답 데이터 타입
      * @throws IOException 응답을 쓰지 못한 경우
      */
-    private void write(HttpServletResponse response, HttpStatus status, CommonResponse<String> body)
-            throws IOException {
+    private <T> void write(HttpServletResponse response, HttpStatus status, CommonResponse<T> body) throws IOException {
         response.setStatus(status.value());
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         response.setCharacterEncoding(StandardCharsets.UTF_8.name());

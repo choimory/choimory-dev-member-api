@@ -4,12 +4,14 @@ import dev.choimory.member.api.common.exception.CommonException;
 import dev.choimory.member.api.member.v1.command.payload.request.MemberJoinRequest;
 import dev.choimory.member.api.member.v1.command.repository.MemberRepository;
 import dev.choimory.member.domain.authority.command.dto.AuthorityDto;
+import dev.choimory.member.domain.authority.command.dto.MemberAuthorityDto;
 import dev.choimory.member.domain.authority.command.entity.Authority;
 import dev.choimory.member.domain.authority.command.entity.MemberAuthority;
 import dev.choimory.member.domain.member.command.dto.MemberDto;
 import dev.choimory.member.domain.member.command.entity.Member;
 import jakarta.persistence.EntityManager;
 import java.util.List;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -87,6 +89,22 @@ public class MemberCommandHandler {
             }
             throw e;
         }
+    }
+
+    /**
+     * 이메일로 회원을 조회합니다. 로그인에 필요한 권한만 포함하고 이미지, 정지 이력, 약관은 조회하지 않아 null입니다.
+     *
+     * @param email 이메일
+     * @return 권한을 포함한 회원 DTO, 없거나 삭제된 회원이면 비어 있음
+     */
+    public Optional<MemberDto> findByEmail(String email) {
+        return memberRepository
+                .findByEmail(email)
+                .map(member -> MemberDto.fromWithoutChildren(member).toBuilder()
+                        .authorities(member.getAuthorities().stream()
+                                .map(MemberAuthorityDto::from)
+                                .toList())
+                        .build());
     }
 
     /**

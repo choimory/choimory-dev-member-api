@@ -6,7 +6,7 @@ spring:
         name: choimory-dev-member-api
 
     profiles:
-        include: datasource, jwt
+        include: datasource, jwt, redis
         group:
             default: prod, flyway
             prod: prod, flyway

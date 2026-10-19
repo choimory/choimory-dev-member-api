@@ -1,0 +1,259 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "choimory-dev-member-api - auth",
+    "version": "v1",
+    "description": "인증(auth) 도메인 API 명세서입니다.\n\n- 모든 응답은 공통 응답 객체(`code`, `name`, `message`, `data`)로 내려갑니다.\n- 토큰은 `Authorization: Bearer {accessToken}` 헤더로 보냅니다.\n- Access Token은 30분, Refresh Token은 14일 동안 유효합니다.\n- 로그인은 Spring Security 필터가 처리합니다."
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "로컬"
+    }
+  ],
+  "tags": [
+    {
+      "name": "auth",
+      "description": "인증"
+    }
+  ],
+  "paths": {
+    "/v1/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "login",
+        "summary": "로그인",
+        "description": "이메일과 비밀번호로 로그인해 Access Token과 Refresh Token을 발급합니다.\n\n- 상태가 `ACTIVATE`인 회원만 로그인할 수 있습니다.\n- 없는 이메일, 틀린 비밀번호, 로그인할 수 없는 상태(가입 대기, 비활성, 정지), 탈퇴한 회원은 구분하지 않고 모두 같은 401 응답을 받습니다. 계정 정보가 노출되지 않도록 하기 위해서입니다.\n- 요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있으면 400입니다. 비밀번호 규칙은 노출하지 않으므로 형식 검증은 하지 않습니다.\n- Refresh Token은 서버(Redis)에도 저장되며 로그인할 때마다 새로 발급됩니다. 여러 기기에서 동시에 로그인할 수 있습니다.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              },
+              "examples": {
+                "정상 요청": {
+                  "summary": "가입한 이메일과 비밀번호",
+                  "value": {
+                    "email": "choi@example.com",
+                    "password": "Password1!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "로그인 성공. 두 토큰과 만료까지 남은 시간(초)을 내려줍니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseLoginResponse"
+                },
+                "examples": {
+                  "성공": {
+                    "summary": "로그인 성공",
+                    "value": {
+                      "code": 200,
+                      "name": "OK",
+                      "message": "OK",
+                      "data": {
+                        "accessToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk5ZjNhMi03YzFlLTdiNTItOWQzYS00ZjZlOGExYjJjM2QiLCJqdGkiOiI3ZjJlOWMxYS0zYjRkLTRlNmYtOGE1Yy0xZDJlM2Y0YTViNmMiLCJpc3MiOiJjaG9pbW9yeS1kZXYtbWVtYmVyLWFwaSIsInR5cGUiOiJhY2Nlc3MiLCJhdXRob3JpdGllcyI6WyJNRU1CRVIiXX0.c2lnbmF0dXJlLWV4YW1wbGU",
+                        "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk5ZjNhMi03YzFlLTdiNTItOWQzYS00ZjZlOGExYjJjM2QiLCJqdGkiOiI5YTFiMmMzZC00ZTVmLTZhN2ItOGM5ZC0wZTFmMmEzYjRjNWQiLCJpc3MiOiJjaG9pbW9yeS1kZXYtbWVtYmVyLWFwaSIsInR5cGUiOiJyZWZyZXNoIn0.c2lnbmF0dXJlLWV4YW1wbGU",
+                        "tokenType": "Bearer",
+                        "accessExpiresIn": 1799,
+                        "refreshExpiresIn": 1209599
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "요청 본문이 JSON이 아니거나 이메일, 비밀번호가 비어 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseError"
+                },
+                "examples": {
+                  "JSON이 아닌 본문": {
+                    "summary": "JSON이 아닌 요청 본문 (예: not-json)",
+                    "value": {
+                      "code": 400,
+                      "name": "BAD_REQUEST",
+                      "message": "Bad Request",
+                      "data": null
+                    }
+                  },
+                  "비밀번호 누락": {
+                    "summary": "비밀번호가 없거나 공백",
+                    "value": {
+                      "code": 400,
+                      "name": "BAD_REQUEST",
+                      "message": "Bad Request",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 실패. 없는 이메일, 틀린 비밀번호, 로그인할 수 없는 상태의 회원, 탈퇴한 회원 모두 같은 응답입니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseError"
+                },
+                "examples": {
+                  "로그인 실패": {
+                    "summary": "인증 실패",
+                    "value": {
+                      "code": 401,
+                      "name": "UNAUTHORIZED",
+                      "message": "Unauthorized",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "서버 오류. 내부 정보 노출을 막기 위해 원인은 응답에 담지 않습니다. (예: Redis 연결 실패)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CommonResponseError"
+                },
+                "examples": {
+                  "서버 오류": {
+                    "summary": "처리되지 않은 서버 오류",
+                    "value": {
+                      "code": 500,
+                      "name": "INTERNAL_SERVER_ERROR",
+                      "message": "Internal Server Error",
+                      "data": null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "description": "로그인 요청",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "가입한 이메일",
+            "example": "choi@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "비밀번호 (평문). 비어 있거나 공백이면 400",
+            "example": "Password1!"
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "description": "로그인 응답",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "description": "Access Token (HS256 JWT). 요청 인증에 사용합니다.",
+            "example": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk5ZjNhMi03YzFlLTdiNTItOWQzYS00ZjZlOGExYjJjM2QiLCJqdGkiOiI3ZjJlOWMxYS0zYjRkLTRlNmYtOGE1Yy0xZDJlM2Y0YTViNmMiLCJpc3MiOiJjaG9pbW9yeS1kZXYtbWVtYmVyLWFwaSIsInR5cGUiOiJhY2Nlc3MiLCJhdXRob3JpdGllcyI6WyJNRU1CRVIiXX0.c2lnbmF0dXJlLWV4YW1wbGU"
+          },
+          "refreshToken": {
+            "type": "string",
+            "description": "Refresh Token (HS256 JWT). Access Token 재발급에 사용합니다.",
+            "example": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIwMTk5ZjNhMi03YzFlLTdiNTItOWQzYS00ZjZlOGExYjJjM2QiLCJqdGkiOiI5YTFiMmMzZC00ZTVmLTZhN2ItOGM5ZC0wZTFmMmEzYjRjNWQiLCJpc3MiOiJjaG9pbW9yeS1kZXYtbWVtYmVyLWFwaSIsInR5cGUiOiJyZWZyZXNoIn0.c2lnbmF0dXJlLWV4YW1wbGU"
+          },
+          "tokenType": {
+            "type": "string",
+            "description": "토큰 종류. Authorization 헤더 접두어",
+            "example": "Bearer"
+          },
+          "accessExpiresIn": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Access Token 만료까지 남은 시간(초)",
+            "example": 1799
+          },
+          "refreshExpiresIn": {
+            "type": "integer",
+            "format": "int64",
+            "description": "Refresh Token 만료까지 남은 시간(초)",
+            "example": 1209599
+          }
+        }
+      },
+      "CommonResponseLoginResponse": {
+        "type": "object",
+        "description": "성공 응답 (data: 로그인 결과)",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "응답 코드",
+            "example": 200
+          },
+          "name": {
+            "type": "string",
+            "description": "응답 코드명",
+            "example": "OK"
+          },
+          "message": {
+            "type": "string",
+            "description": "응답 메시지",
+            "example": "OK"
+          },
+          "data": {
+            "$ref": "#/components/schemas/LoginResponse"
+          }
+        }
+      },
+      "CommonResponseError": {
+        "type": "object",
+        "description": "오류 응답 (data 없음)",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "description": "응답 코드",
+            "example": 401
+          },
+          "name": {
+            "type": "string",
+            "description": "오류 코드명",
+            "example": "UNAUTHORIZED"
+          },
+          "message": {
+            "type": "string",
+            "description": "오류 메시지",
+            "example": "Unauthorized"
+          },
+          "data": {
+            "type": "null",
+            "description": "데이터 없음",
+            "example": null
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,6 +1,8 @@
 package dev.choimory.member.api.member.v1.command.repository;
 
 import dev.choimory.member.domain.member.command.entity.Member;
+import java.util.Optional;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -29,4 +31,13 @@ public interface MemberRepository extends JpaRepository<Member, String> {
      */
     @Query(value = "select exists(select 1 from member where nickname = :nickname)", nativeQuery = true)
     boolean existsByNicknameIncludingDeleted(@Param("nickname") String nickname);
+
+    /**
+     * 이메일로 회원을 조회합니다. 로그인에 필요한 권한을 함께 가져오며, soft delete된 회원은 제외됩니다.
+     *
+     * @param email 이메일
+     * @return 권한을 포함한 회원 엔티티
+     */
+    @EntityGraph(attributePaths = {"authorities", "authorities.authority"})
+    Optional<Member> findByEmail(String email);
 }

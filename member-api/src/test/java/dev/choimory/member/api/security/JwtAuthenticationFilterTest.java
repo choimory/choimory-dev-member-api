@@ -17,17 +17,13 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 /**
  * JWT 인증 필터 통합 테스트입니다. 테스트용 컨트롤러로 토큰에 따른 인증, 인가 결과를 확인합니다.
  */
-@Import({TestcontainersConfiguration.class, JwtAuthenticationFilterTest.TestController.class})
+@Import({TestcontainersConfiguration.class, TestSecurityController.class})
 @SpringBootTest
 @AutoConfigureMockMvc
 @ActiveProfiles("local")
@@ -173,24 +169,5 @@ class JwtAuthenticationFilterTest {
      */
     private String bearer(String token) {
         return "Bearer " + token;
-    }
-
-    /**
-     * 인증 결과를 확인하기 위한 테스트용 컨트롤러입니다.
-     */
-    @RestController
-    static class TestController {
-
-        @GetMapping("/test/whoami")
-        List<String> whoami(@AuthenticationPrincipal dev.choimory.member.api.security.user.AuthenticatedMember member) {
-            return List.of(
-                    member.getId(), member.getAuthorities().iterator().next().getAuthority());
-        }
-
-        @GetMapping("/test/admin")
-        @PreAuthorize("hasRole('ADMIN')")
-        String admin() {
-            return "ok";
-        }
     }
 }
