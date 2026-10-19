@@ -38,6 +38,19 @@
   - [MemberDuplicateException을 만든 의도](#memberduplicateexception을-만든-의도)
   - [Authority 핸들러와 리포지토리](#authority-핸들러와-리포지토리)
   - [정해야 할 것](#정해야-할-것-1)
+- [추가4](#추가4)
+- [추가4 결정 사항과 예외 방침 반영 계획](#추가4-결정-사항과-예외-방침-반영-계획)
+  - [답변](#답변-6)
+  - [결정 사항](#결정-사항)
+  - [예외 방침 이해](#예외-방침-이해)
+  - [수정 계획](#수정-계획)
+  - [확인 요청](#확인-요청)
+- [authority 기본 데이터(DML) 추가](#authority-기본-데이터dml-추가)
+  - [답변](#답변-7)
+  - [이전 항목](#이전-항목)
+  - [authority 기본 데이터](#authority-기본-데이터)
+  - [영향 범위](#영향-범위)
+  - [추가4 정해야 할 항목](#추가4-정해야-할-항목)
 
 ---
 
@@ -365,4 +378,124 @@ record, `@Valid` 검증.
 - 공통 예외를 사용하라는 이유는 2가지임
   - 추후 예외 핸들러에 로그 달고 에외상황이 critical한지 아닌지 알람도 보내서 모니터링 해야하는데, 매번 예외추가하면 계속 늘어나서 손 많이가고 복잡함. 
   - 공통예외는 기본적으로 critical한 상황이 아니기 때문에 비즈니스적인 예외는 공통예외에 메세지 넣어서 던지면 처리 가능.
-- DML에 MEMBER 권한 추가
+- DML에 authority, menu 기본 데이터 추가
+  - authority: MEMBER(회원), ADMIN(관리자)
+  - menu: 이건 일단 보류. 메뉴 구체화될때 추가
+
+---
+
+# 추가4 결정 사항과 예외 방침 반영 계획
+
+> - 이메일 제약에 패턴 추가 (a@b 방지)
+> - 비밀번호 제약은 너의 방식 유지
+> - 닉네임은 내가 제안한 제약대로
+> - 공통 예외를 사용하라는 이유는 2가지임
+>   - 추후 예외 핸들러에 로그 달고 에외상황이 critical한지 아닌지 알람도 보내서 모니터링 해야하는데, 매번 예외추가하면 계속 늘어나서 손 많이가고 복잡함. 
+>   - 공통예외는 기본적으로 critical한 상황이 아니기 때문에 비즈니스적인 예외는 공통예외에 메세지 넣어서 던지면 처리 가능.
+
+## 답변
+
+"추가4"의 결정 사항을 정리하고 예외 방침을 반영한 수정 계획을 세웠다. 이 시점에는 코드를 수정하지 않았다.
+
+## 결정 사항
+
+| 항목 | 결정 |
+|---|---|
+| 이메일 | `a@b`처럼 점이 없는 도메인을 막는 패턴 추가 |
+| 비밀번호 | 제안한 방식 유지 (8~64자, 영문·숫자·특수문자 모두 포함) |
+| 닉네임 | 제안한 대로 (특수문자 제외, 한글·영문·숫자만 3~15자) |
+| 예외 | 별도 예외를 만들지 않고 `CommonException`에 메시지를 담아 던짐 |
+
+## 예외 방침 이해
+
+- 비즈니스 예외는 critical하지 않은 상황이라 `CommonException`으로 던진다. 핸들러에서 로그와 알람을 한 곳에서 일관되게 처리하고, 예외 클래스가 늘어나 복잡해지는 것을 막으려는 의도로 이해했다.
+- 반대로 `CommonException`이 아닌 예외는 모두 일반 `Exception` 핸들러로 가서 error 로그와 500이 되므로 critical로 분류된다.
+- 이 기준이 지금 구조에 잘 맞는다. 중복 가입은 non-critical(`CommonException` 409)이고, `MEMBER` 권한 행이 없어 나는 `IllegalStateException`은 critical(500)이다.
+- `MemberDuplicateException`은 이 방침과 맞지 않아 제거한다.
+
+## 수정 계획
+
+대안 A 기준이다.
+
+1. `MemberJoinRequest`
+   - 이메일: `@Email`에 `@Pattern` 추가 (예: `^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$`). 영문 도메인만 허용하고 한글 도메인 등은 막힌다.
+   - 닉네임: `@Pattern(regexp = "^[가-힣A-Za-z0-9]{3,15}$")`로 교체하고 `@Size`는 뺀다. 자기소개 500자와 비밀번호 규칙은 그대로 둔다.
+2. `MemberDuplicateException` 삭제
+3. `MemberCommandHandler`
+   - 중복 시 `new CommonException(HttpStatus.CONFLICT, 409, "DUPLICATE_EMAIL" 또는 "DUPLICATE_NICKNAME", 메시지)`를 던진다. 문구는 클래스 안의 private 메서드 두 개로 모은다.
+   - `join`에서 `saveAndFlush`가 던지는 `DataIntegrityViolationException`을 잡아, 위반한 제약명으로 같은 `CommonException`(409)으로 바꿔 던진다. 알 수 없는 제약 위반은 잡지 않고 그대로 던져 critical(500)로 간다.
+   - 제약명을 찾는 로직(Hibernate 원인 체인과 메시지 폴백)도 이 클래스로 옮긴다.
+4. `CommonExceptionHandler`: 추가했던 `DataIntegrityViolationException` 처리를 제거해 원래대로 되돌린다. member 패키지 import도 없어진다.
+5. 테스트
+   - `CommonExceptionHandlerTest`에 추가한 무결성 예외 테스트 2건을 제거한다.
+   - `MemberJoinTest`에서는 변환 테스트를 "사전 검증을 건너뛰고 `MemberCommandHandler.join`을 직접 호출했을 때 `CommonException`(409, `DUPLICATE_EMAIL`/`DUPLICATE_NICKNAME`)이 나오는지"로 바꾼다.
+   - 닉네임 허용·불허 케이스(특수문자, 2자와 16자 경계, 한글), 이메일 `a@b` 거부 케이스를 추가한다.
+6. 수정 후 `spotlessApply`와 `clean build`로 확인하고 변경 내용을 설명한다. `task`와 `plan` 문서는 요청할 때만 작성한다.
+
+## 확인 요청
+
+- 이 계획으로 수정을 시작해도 되는지
+- 이메일 패턴이 위 정규식으로 괜찮은지
+
+---
+
+# authority 기본 데이터(DML) 추가
+
+> - DML에 authority, menu 기본 데이터 추가
+>   - authority: MEMBER(회원), ADMIN(관리자)
+>   - menu: 이건 일단 보류. 메뉴 구체화될때 추가
+
+## 답변
+
+"추가4"에 새로 생긴 DML 항목에 대한 답변이다. authority에 `MEMBER`(회원)와 `ADMIN`(관리자)을 넣고, menu는 메뉴가 구체화될 때 추가하는 것으로 보류한다고 이해했다. 이 시점에는 코드를 수정하지 않았다.
+
+## 이전 항목
+
+이메일 패턴 추가, 비밀번호 유지, 닉네임 제약, `MemberDuplicateException` 제거 후 `CommonException` 사용, 동시 요청 변환을 `MemberCommandHandler`로 이동하는 계획은 위 섹션의 내용 그대로이다.
+
+## authority 기본 데이터
+
+`docs/db/v1/v1-choimory-dev-member-dml.sql`은 비어 있고 "참고용이며 앱과 테스트에서 사용하지 않는다"고 되어 있다. 앱에 실제로 적용되려면 Flyway 마이그레이션 `docs/flyway/v1/V3__init_authority.sql`로 넣어야 한다. 현재 V1과 V2가 있다.
+
+### V3 내용 제안
+
+```sql
+insert into authority (id, name, code, created_at)
+values ('<UUID v7>', '회원', 'MEMBER', now()),
+       ('<UUID v7>', '관리자', 'ADMIN', now())
+on conflict (code) do nothing;
+```
+
+- id는 서버가 UUID v7으로 채번하는 값이라, SQL에는 미리 만든 UUID v7 리터럴을 고정으로 넣는 방식을 제안한다. 환경마다 id가 같아진다.
+- `on conflict (code) do nothing`은 `uk_authority_code` 때문에 재실행해도 안전하게 하려는 것이다.
+- `AuthorityCode` enum에 있는 `MODERATOR`는 데이터에 넣지 않는다. enum 값은 그대로 둔다.
+
+## 영향 범위
+
+기존 테스트가 깨질 수 있다.
+
+- `member-domain` 테스트는 `docs/flyway`의 `V*.sql`을 모두 컨테이너에 적용하는데, V3로 `MEMBER`, `ADMIN` 행이 들어가면 같은 코드를 직접 insert하는 테스트가 유니크 위반으로 실패한다.
+- 해당 테스트: `AuthorityEntitiesTest`(ADMIN 저장), `DdlScriptTest`(`authorityCodeIsUnique`, `memberAuthorityIsUnique` 등).
+- 대응은 두 가지 중 하나이다.
+  - (1) 도메인 테스트가 V3 같은 데이터 전용 마이그레이션을 건너뛰게 한다. 스키마 검증이 목적이므로 이 방식을 추천한다.
+  - (2) 영향받는 테스트마다 setup에서 authority를 비운다.
+- `member-api`의 `MemberJoinTest`는 지금 직접 `MEMBER`를 insert하는데, V3가 있으면 그 insert를 빼고 seed를 쓰도록 바꾼다. `truncate`에서도 authority를 제외한다.
+- 새 테스트로 "앱 기동 후 `MEMBER`, `ADMIN` 권한이 존재한다"를 `FlywayMigrationTest`에 추가한다.
+- 참고용 DML 파일 `docs/db/v1/v1-choimory-dev-member-dml.sql`에도 같은 insert를 반영할지 정해야 한다.
+
+## 추가4 정해야 할 항목
+
+1. 도메인 테스트 대응을 (1) 데이터 전용 마이그레이션 제외로 갈지 (2) 테스트별 정리로 갈지
+2. UUID v7 리터럴을 미리 만들어 고정으로 넣어도 되는지 (id를 서버 채번 대신 SQL에 두는 첫 사례이다)
+3. 참고용 DML 파일도 같이 갱신할지
+4. 이메일 정규식이 괜찮은지
+5. 위 수정 계획(Request 제약, 예외 정리, V3)을 한 번에 진행해도 되는지
+
+--- 
+
+# 추가5
+
+- dml이랑 flyway에 모두 dml을 반영해야함. 
+- uuid 고정해도됨
+- 이메일 정규식 괜찮음
+- 도메인테스트는 1로 해줘

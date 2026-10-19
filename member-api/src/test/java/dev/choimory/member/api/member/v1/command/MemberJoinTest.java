@@ -9,10 +9,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.choimory.member.api.TestcontainersConfiguration;
-import dev.choimory.member.api.common.exception.CommonExceptionHandler;
+import dev.choimory.member.api.authority.v1.command.handler.AuthorityCommandHandler;
+import dev.choimory.member.api.common.exception.CommonException;
+import dev.choimory.member.api.member.v1.command.handler.MemberCommandHandler;
 import dev.choimory.member.api.member.v1.command.payload.request.MemberJoinRequest;
 import dev.choimory.member.api.member.v1.command.repository.MemberRepository;
-import dev.choimory.member.domain.authority.command.entity.Authority;
+import dev.choimory.member.domain.authority.command.dto.AuthorityDto;
 import dev.choimory.member.domain.authority.command.type.AuthorityCode;
 import dev.choimory.member.domain.member.command.entity.Member;
 import dev.choimory.member.domain.member.command.type.MemberStatus;
@@ -24,13 +26,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.transaction.support.TransactionTemplate;
 
 /**
  * 회원가입 API 통합 테스트입니다. 실제 PostgreSQL(Testcontainers)과 Flyway 스키마를 사용합니다.
@@ -59,25 +61,22 @@ class MemberJoinTest {
     @Autowired
     private PasswordEncoder passwordEncoder; // 비밀번호 인코더
 
-    /**
-     * 기본 권한(MEMBER) 데이터를 준비합니다. 초기 데이터(DML)가 아직 없으므로 테스트에서 넣습니다.
-     */
-    @BeforeEach
-    void setUp() {
-        cleanUp();
-        jdbc.update(
-                "insert into authority (id, name, code, created_at) values (?, ?, ?, now())",
-                Authority.builder().build().getId(),
-                "일반 회원",
-                AuthorityCode.MEMBER.name());
-    }
+    @Autowired
+    private MemberCommandHandler memberCommandHandler; // 회원 명령 핸들러
+
+    @Autowired
+    private AuthorityCommandHandler authorityCommandHandler; // 권한 명령 핸들러
+
+    @Autowired
+    private TransactionTemplate transactionTemplate; // 서비스의 @Transactional을 대신하는 트랜잭션 템플릿
 
     /**
-     * 테스트 데이터를 정리합니다.
+     * 회원 데이터를 정리합니다. 권한 기본 데이터(V3)는 마이그레이션으로 들어 있으므로 남겨 둡니다.
      */
+    @BeforeEach
     @AfterEach
     void cleanUp() {
-        jdbc.execute("truncate table member_authority, member, authority cascade");
+        jdbc.execute("truncate table member_authority, member cascade");
     }
 
     /**
@@ -183,30 +182,59 @@ class MemberJoinTest {
     }
 
     /**
-     * 사전 검증을 통과한 동시 요청이 유니크 제약에 걸리면 제약 이름에 맞는 409 응답으로 변환됩니다.
+     * 도메인(점)이 없는 이메일은 거부됩니다.
+     *
+     * @throws Exception MockMvc 수행 중 발생
+     */
+    @Test
+    void emailWithoutDomainDotIsBadRequest() throws Exception {
+        // a@b 형식으로 가입하면 이메일 검증에 실패해야 한다.
+        join(request("a@b", "nick1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.data[*].field").value(hasItems("email")));
+    }
+
+    /**
+     * 닉네임은 특수문자를 제외한 한글, 영문, 숫자만 3~15자까지 허용합니다.
+     *
+     * @throws Exception MockMvc 수행 중 발생
+     */
+    @Test
+    void nicknameAllowsOnlyKoreanEnglishDigitsWithLength3To15() throws Exception {
+        // 경계 길이(3자, 15자)와 한글, 영문, 숫자 조합은 가입되어야 한다.
+        join(request("a1@a.com", "abc")).andExpect(status().isCreated());
+        join(request("a2@a.com", "가나다라마바사아자차카타파하1")).andExpect(status().isCreated());
+        join(request("a3@a.com", "닉네임Abc123")).andExpect(status().isCreated());
+
+        // 2자, 16자, 특수문자, 공백이 들어간 닉네임은 거부되어야 한다.
+        for (String nickname : List.of("ab", "abcdefghijklmnop", "nick_1", "nick!", "nick 1")) {
+            join(request("b@b.com", nickname))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.data[*].field").value(hasItems("nickname")));
+        }
+    }
+
+    /**
+     * 사전 검증을 통과한 동시 요청이 유니크 제약에 걸리면 제약 이름에 맞는 409 공통 예외로 변환됩니다.
      */
     @Test
     void uniqueViolationIsConvertedToConflict() {
-        // 회원을 하나 저장한다.
-        memberRepository.saveAndFlush(member("a@a.com", "nick1"));
-        CommonExceptionHandler handler = new CommonExceptionHandler();
+        // 사전 검증을 건너뛰고 저장하는 상황(동시 요청)을 만들기 위해 서비스의 트랜잭션처럼 감싸 핸들러의 join을 직접 호출한다.
+        AuthorityDto authority = authorityCommandHandler.findByCode(AuthorityCode.MEMBER);
+        inTransaction(() -> memberCommandHandler.join(request("a@a.com", "nick1"), authority));
 
-        // 이메일이 겹치게 저장하면 이메일 중복 409로 변환되어야 한다.
-        assertThatThrownBy(() -> memberRepository.saveAndFlush(member("a@a.com", "nick2")))
-                .isInstanceOf(DataIntegrityViolationException.class)
-                .satisfies(e -> {
-                    var response = handler.dataIntegrityViolationException((DataIntegrityViolationException) e);
-                    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-                    assertThat(response.getBody().name()).isEqualTo("DUPLICATE_EMAIL");
+        // 이메일이 겹치면 이메일 중복 409여야 한다.
+        assertThatThrownBy(() -> inTransaction(() -> memberCommandHandler.join(request("a@a.com", "nick2"), authority)))
+                .isInstanceOfSatisfying(CommonException.class, e -> {
+                    assertThat(e.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(e.getCodeName()).isEqualTo("DUPLICATE_EMAIL");
                 });
 
-        // 닉네임이 겹치게 저장하면 닉네임 중복 409로 변환되어야 한다.
-        assertThatThrownBy(() -> memberRepository.saveAndFlush(member("b@b.com", "nick1")))
-                .isInstanceOf(DataIntegrityViolationException.class)
-                .satisfies(e -> {
-                    var response = handler.dataIntegrityViolationException((DataIntegrityViolationException) e);
-                    assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-                    assertThat(response.getBody().name()).isEqualTo("DUPLICATE_NICKNAME");
+        // 닉네임이 겹치면 닉네임 중복 409여야 한다.
+        assertThatThrownBy(() -> inTransaction(() -> memberCommandHandler.join(request("b@b.com", "nick1"), authority)))
+                .isInstanceOfSatisfying(CommonException.class, e -> {
+                    assertThat(e.getStatus()).isEqualTo(HttpStatus.CONFLICT);
+                    assertThat(e.getCodeName()).isEqualTo("DUPLICATE_NICKNAME");
                 });
     }
 
@@ -248,18 +276,11 @@ class MemberJoinTest {
     }
 
     /**
-     * 테스트용 회원 엔티티를 생성합니다.
+     * 서비스의 @Transactional처럼 트랜잭션 안에서 작업을 수행합니다.
      *
-     * @param email 이메일
-     * @param nickname 닉네임
-     * @return 회원 엔티티
+     * @param action 수행할 작업
      */
-    private Member member(String email, String nickname) {
-        return Member.builder()
-                .email(email)
-                .password("encoded")
-                .nickname(nickname)
-                .status(MemberStatus.ACTIVATE)
-                .build();
+    private void inTransaction(Runnable action) {
+        transactionTemplate.executeWithoutResult(status -> action.run());
     }
 }

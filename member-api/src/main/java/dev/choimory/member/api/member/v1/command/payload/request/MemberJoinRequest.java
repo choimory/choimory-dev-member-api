@@ -13,19 +13,25 @@ import lombok.Builder;
  *
  * @param email 이메일
  * @param password 비밀번호 (평문, 영문/숫자/특수문자를 모두 포함한 8~64자)
- * @param nickname 닉네임
+ * @param nickname 닉네임 (특수문자를 제외한 한글, 영문, 숫자 3~15자)
  * @param introduce 자기소개 (선택)
  */
 @Builder(toBuilder = true)
 public record MemberJoinRequest(
-        @NotBlank @Email @Size(max = 255) String email,
+        @NotBlank
+        @Email
+        @Size(max = 255)
+        @Pattern(regexp = "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$", message = "올바른 이메일 형식이 아닙니다.")
+        String email,
 
         @NotBlank
         @Size(min = 8, max = 64)
         @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d)(?=.*[^A-Za-z\\d]).+$", message = "영문, 숫자, 특수문자를 모두 포함해야 합니다.")
         String password,
 
-        @NotBlank @Size(min = 2, max = 20) String nickname,
+        @NotBlank @Pattern(regexp = "^[가-힣A-Za-z0-9]{3,15}$", message = "닉네임은 한글, 영문, 숫자만 사용해 3~15자여야 합니다.")
+        String nickname,
+
         @Size(max = 500) String introduce) {
 
     /**

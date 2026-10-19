@@ -63,4 +63,17 @@ class FlywayMigrationTest {
                         "agreement",
                         "agreement_answer");
     }
+
+    /**
+     * 권한 기본 데이터(MEMBER, ADMIN)가 마이그레이션으로 들어갔는지 확인합니다.
+     */
+    @Test
+    void migrationInsertsDefaultAuthorities() {
+        // 권한 코드와 이름을 조회한다.
+        List<String> authorities =
+                jdbc.queryForList("select code || ':' || name from authority order by code", String.class);
+
+        // MEMBER(회원), ADMIN(관리자)만 들어 있어야 한다.
+        assertThat(authorities).containsExactly("ADMIN:관리자", "MEMBER:회원");
+    }
 }

@@ -18,11 +18,13 @@ import java.util.stream.Stream;
 public final class MigrationScripts {
 
     private static final Pattern VERSIONED = Pattern.compile("V(\\d+)__.+\\.sql"); // 버전 마이그레이션 파일명 규칙
+    private static final String DATA_MARKER = "data"; // 데이터 전용 마이그레이션 파일명 설명에 포함되는 표시
 
     private MigrationScripts() {}
 
     /**
      * 시스템 프로퍼티 docs.flyway.dir 아래의 마이그레이션 SQL 파일을 버전 오름차순으로 조회합니다.
+     * 설명에 data가 포함된 데이터 전용 파일(예: V3__init_authority_data.sql)은 스키마 검증에 필요 없으므로 제외합니다.
      *
      * @return 버전 순으로 정렬된 마이그레이션 SQL 파일 경로
      * @throws UncheckedIOException 디렉토리를 읽지 못한 경우 발생
@@ -34,11 +36,24 @@ public final class MigrationScripts {
             // 파일명의 버전 숫자 순으로 정렬한다. (V10이 V2보다 뒤에 오도록 숫자로 비교한다)
             return paths.filter(path ->
                             VERSIONED.matcher(path.getFileName().toString()).matches())
+                    .filter(path -> !isDataOnly(path))
                     .sorted(Comparator.comparingInt(MigrationScripts::version))
                     .toList();
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
+    }
+
+    /**
+     * 데이터 전용 마이그레이션 파일인지 확인합니다. 파일명의 설명(__ 뒤)에 data가 포함되면 데이터 전용입니다.
+     *
+     * @param path 마이그레이션 SQL 파일 경로
+     * @return 데이터 전용이면 true
+     */
+    private static boolean isDataOnly(Path path) {
+        // V{버전}__{설명}.sql에서 설명에 data가 포함되는지 확인한다.
+        String description = path.getFileName().toString().split("__", 2)[1];
+        return description.contains(DATA_MARKER);
     }
 
     /**

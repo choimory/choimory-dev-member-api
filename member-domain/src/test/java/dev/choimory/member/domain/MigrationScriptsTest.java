@@ -39,4 +39,15 @@ class MigrationScriptsTest {
         // 첫 번째 파일의 이름이 V1__init_schema.sql이어야 한다.
         assertThat(MigrationScripts.files().get(0).getFileName().toString()).isEqualTo("V1__init_schema.sql");
     }
+
+    /**
+     * 설명에 data가 포함된 데이터 전용 파일은 조회되지 않는지 확인합니다.
+     */
+    @Test
+    void dataOnlyMigrationsAreExcluded() {
+        // 조회된 파일 중 설명에 data가 포함된 파일은 없어야 한다.
+        assertThat(MigrationScripts.files())
+                .noneMatch(
+                        path -> path.getFileName().toString().split("__", 2)[1].contains("data"));
+    }
 }
