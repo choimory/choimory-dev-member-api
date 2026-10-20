@@ -6,7 +6,7 @@
 - Java 21 기반 Spring Boot 회원 서버이며 Gradle 멀티 모듈로 구성한다.
 - 회원 도메인의 DB 설계(DDL)와 엔티티, DTO, enum, 공통 응답과 예외 핸들러, Flyway 마이그레이션이 구현되어 있다.
 - `member-api`는 회원가입, 로그인, 토큰 재발급, 로그아웃(JWT, Redis)이 구현되어 있고, 그 외 API(`authority`, `agreement`, `menu`와 query)는 도메인별 기본 구조(클래스와 필드만, 메소드 없음)만 있다.
-- 작업 히스토리는 `.agents/histories`를 참고한다. (DB 설계와 구현: `.agents/histories/2026/02/17/modeling`, API 기본 구조와 공통 응답, 예외: `.agents/histories/2026/10/14/api-base-structure`, Flyway 적용: `.agents/histories/2026/10/14/flyway-apply`, 회원가입, Spring Security, JWT, 로그인/로그아웃: `.agents/histories/2026/10/19/member-join-security-auth`)
+- 작업 히스토리는 `.agents/histories`를 참고한다. (DB 설계와 구현: `.agents/histories/2026/02/17/modeling`, API 기본 구조와 공통 응답, 예외: `.agents/histories/2026/10/14/api-base-structure`, Flyway 적용: `.agents/histories/2026/10/14/flyway-apply`, 회원가입, Spring Security, JWT, 로그인/로그아웃: `.agents/histories/2026/10/19/member-join-security-auth`, CORS: `.agents/histories/2026/10/20/cors`)
 
 ## 기술 구성
 
@@ -54,7 +54,8 @@
     └── src/main
         ├── java/dev/choimory/member/api
         │   ├── ChoimoryDevMemberApiApplication.java
-        │   ├── config                    # JpaConfig, PasswordEncoderConfig, SecurityConfig
+        │   ├── config                    # JpaConfig, PasswordEncoderConfig, SecurityConfig, CorsConfig
+        │   ├── config/properties         # JwtProperties, CorsProperties (@ConfigurationProperties 설정 바인딩 레코드)
         │   ├── common/exception          # CommonException, CommonExceptionHandler
         │   ├── {member,authority,agreement,menu}/v1/{command,query}/{controller,service,handler,repository,payload}
         │   ├── jwt/v1/command            # handler, repository, util(JwtProvider), payload/{dto,type}
@@ -161,6 +162,10 @@ JWT(HS256) 기반 stateless 인증이며 Refresh Token과 Access Token 블랙리
 
 - 그 외 모든 주소는 `Authorization: Bearer {accessToken}`이 필요하다. 토큰 오류는 만료 `TOKEN_EXPIRED`, 그 외 `INVALID_TOKEN`으로 401을 응답한다.
 - `SecurityConfig`: CSRF, 폼 로그인, HTTP Basic, 기본 로그아웃을 끄고 stateless 세션을 쓴다. `@EnableMethodSecurity`가 켜져 있다. 필터 순서는 `JwtAuthenticationFilter` → `LoginFilter` → `LogoutFilter`이며, 필터는 스프링 빈으로 등록하면 서블릿 필터로 한 번 더 등록되므로 `SecurityConfig`에서 직접 생성한다.
+- CORS: `CorsConfig`가 `corsConfigurationSource` 빈을 `/**`에 등록하고, `SecurityConfig`의 `.cors(Customizer.withDefaults())`가 이를 사용해 인증 필터보다 앞에서 preflight(OPTIONS)를 처리한다.
+  - 허용 Origin은 환경별 `application-{local,dev,prod}.yml`의 `cors.allowed-origins`(스킴과 포트 포함, 끝에 슬래시 없음)로 받는다. `CorsProperties`가 바인딩하며 비어 있으면 앱이 시작되지 않는다. local은 `http://localhost:3000`, dev는 `http://localhost:3000`과 `https://dev.choimory.dev`, prod는 `https://choimory.dev`다.
+  - 허용 메서드는 GET, POST, PUT, PATCH, DELETE, OPTIONS, 허용 헤더는 `Authorization`과 `Content-Type`, 노출 헤더는 `Authorization`, `maxAge`는 3600초이며 `allowCredentials`는 쓰지 않는다. 이 값들은 환경과 관계없이 같아 `CorsConfig`의 상수다.
+  - 인증 실패(401) 응답에도 CORS 헤더가 붙는다. 허용하지 않은 Origin은 403이다.
 - 토큰
   - Access Token 30분, Refresh Token 14일(`application-jwt.yml`). 클레임은 `sub`(회원 ID), `jti`, `iss`, `iat`, `exp`, `type`(access/refresh), `authorities`(Access Token에만). 민감한 값은 담지 않는다.
   - 서명 키는 하나(`jwt-secret`)이며 Access/Refresh Token의 종류는 `type` 클레임으로 구분한다.
@@ -183,6 +188,8 @@ JWT(HS256) 기반 stateless 인증이며 Refresh Token과 Access Token 블랙리
 
 - PostgreSQL을 사용한다. 연결 정보는 `application-datasource.yml`의 환경변수(`rdb-host`, `rdb-port`, `rdb-database`, `rdb-user`, `rdb-password`)로 받는다.
 - Redis 접속 정보는 `application-redis.yml`의 환경변수(`redis-host`, `redis-port`, 선택 값 `redis-username`, `redis-password`)로 받는다. `redis-username`은 Redis ACL(6 이상)을 쓰는 환경에서만 필요하다.
+- 설정 바인딩 객체(`JwtProperties`, `CorsProperties`)는 `config/properties` 패키지에 두고 `SecurityConfig`의 `@EnableConfigurationProperties`로 등록한다.
+- CORS 허용 Origin은 `application-{local,dev,prod}.yml`의 `cors.allowed-origins`로 받는다. 프로필 없이 실행하면 Origin이 없어 앱이 시작되지 않으므로 통합 테스트는 `@ActiveProfiles("local")`를 지정한다.
 - JWT 서명 키는 `application-jwt.yml`의 환경변수 `jwt-secret`(HS256, 32바이트 이상)으로 받는다. 없거나 짧으면 앱이 시작되지 않는다.
 - profile: 기본은 prod이며, `prod`, `dev`, `local` 프로필 그룹은 모두 `flyway` 프로필을 포함한다. (`application-prod.yml`은 `prod` 프로필에서만 적용되고 SQL 로그를 출력하지 않는다) `datasource`, `jwt`, `redis` 프로필은 항상 포함한다.
 - 스키마는 Flyway가 앱 기동 시 `db/migration`의 마이그레이션 SQL로 관리한다. (`ddl-auto: none`, 설정은 `application-flyway.yml`: `validate-on-migrate: true`, `clean-disabled: true`)
@@ -229,6 +236,7 @@ JWT(HS256) 기반 stateless 인증이며 Refresh Token과 Access Token 블랙리
   - `MemberReissueTest`(member-api): 재발급 rotation, 재사용 거부, 최신 권한 반영, 정지·탈퇴 회원 거부, 만료·잘못된 토큰
   - `LoginTest`, `LogoutTest`(member-api): 로그인·로그아웃, 다중 로그인, 블랙리스트, 멱등, 계정 정보 비노출, 잘못된 요청
   - `SecurityConfigTest`, `JwtAuthenticationFilterTest`, `SecurityHandlersTest`(member-api): 열린 주소와 보호된 주소, 토큰 검증, 역할 인가, 401·403 응답
+  - `CorsTest`(member-api): 허용·비허용 Origin의 preflight와 실제 요청, 401 응답의 CORS 헤더. `CorsPropertiesTest`(member-api): local, dev, prod yml의 허용 Origin 바인딩
   - `JwtProviderTest`(member-api, Docker 불필요): 토큰 발급·검증, 만료, 변조, 종류 불일치, 약한 키
   - `JwtRepositoryTest`, `RedisConnectionTest`(member-api): Redis 저장·TTL·블랙리스트, 빈 username·password 접속
 - JPA 테스트는 `@JpaEntityTest`를 사용하며, Auditing은 `JpaAuditingTestConfiguration`을 import한 테스트에서만 켠다. (테스트 앱에 `@EnableJpaAuditing`을 두면 `@JdbcTest`가 깨진다)

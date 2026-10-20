@@ -6,3 +6,4 @@
 - 2026-09-17: DONE:final class record 변환작업(final-class-to-record)
 - 2026-10-14: DONE:API 기본 구조 작성(api-base-structure), DONE:Flyway 적용 작업(flyway-apply)
 - 2026-10-19: DONE:회원가입 API 및 Spring Security 설정, 로그인/로그아웃 필터 작업(member-join-security-auth)
+- 2026-10-20: DONE:CORS 설정 작업(cors)

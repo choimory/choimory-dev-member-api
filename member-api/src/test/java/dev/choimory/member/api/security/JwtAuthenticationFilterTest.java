@@ -6,7 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import dev.choimory.member.api.TestcontainersConfiguration;
-import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtProperties;
+import dev.choimory.member.api.config.properties.JwtProperties;
 import dev.choimory.member.api.jwt.v1.command.util.JwtProvider;
 import java.time.Duration;
 import java.util.List;

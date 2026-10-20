@@ -18,3 +18,8 @@ logging:
     root: info
     dev.choimory: debug
     org:hibernate.SQL: info
+
+# CORS 허용 Origin. 프론트 주소(스킴, 포트 포함)
+cors:
+  allowed-origins:
+    - http://localhost:3000

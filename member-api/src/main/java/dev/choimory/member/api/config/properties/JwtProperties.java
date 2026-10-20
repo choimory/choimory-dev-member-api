@@ -1,4 +1,4 @@
-package dev.choimory.member.api.jwt.v1.command.payload.dto;
+package dev.choimory.member.api.config.properties;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

@@ -1,8 +1,9 @@
 package dev.choimory.member.api.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import dev.choimory.member.api.config.properties.CorsProperties;
+import dev.choimory.member.api.config.properties.JwtProperties;
 import dev.choimory.member.api.jwt.v1.command.handler.JwtCommandHandler;
-import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtProperties;
 import dev.choimory.member.api.jwt.v1.command.util.JwtProvider;
 import dev.choimory.member.api.security.filter.JwtAuthenticationFilter;
 import dev.choimory.member.api.security.filter.LoginFilter;
@@ -21,6 +22,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
+import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -38,7 +40,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties(JwtProperties.class)
+@EnableConfigurationProperties({JwtProperties.class, CorsProperties.class})
 @RequiredArgsConstructor
 public class SecurityConfig {
 
@@ -83,7 +85,8 @@ public class SecurityConfig {
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .logout(AbstractHttpConfigurer::disable)
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                // TODO 클라이언트가 정해지면 CORS를 설정한다.
+                // CORS는 인증 필터보다 앞에서 처리되어야 preflight(OPTIONS)가 401로 막히지 않는다. (CorsConfig의 설정을 사용)
+                .cors(Customizer.withDefaults())
                 // 회원가입, 로그인, 토큰 재발급만 인증 없이 허용하고 나머지는 인증을 요구한다.
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(

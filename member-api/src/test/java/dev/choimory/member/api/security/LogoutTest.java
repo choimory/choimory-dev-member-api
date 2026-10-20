@@ -9,8 +9,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import dev.choimory.member.api.TestcontainersConfiguration;
+import dev.choimory.member.api.config.properties.JwtProperties;
 import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtClaims;
-import dev.choimory.member.api.jwt.v1.command.payload.dto.JwtProperties;
 import dev.choimory.member.api.jwt.v1.command.payload.type.TokenType;
 import dev.choimory.member.api.jwt.v1.command.util.JwtProvider;
 import dev.choimory.member.api.member.v1.command.payload.request.MemberJoinRequest;
