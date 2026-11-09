@@ -1,0 +1,113 @@
+# member-api 테스트, 이미지 빌드, GitOps 이미지 태그 갱신
+# stg 브랜치는 stg 환경, main 브랜치는 prod 환경으로 자동 배포한다.
+name: deploy
+
+on:
+  push:
+    branches:
+      - stg
+      - main
+
+# 같은 브랜치에 연속으로 push되면 이전 실행을 취소해 오래된 이미지가 나중에 배포되는 것을 막는다.
+concurrency:
+  group: deploy-${{ github.ref_name }}
+  cancel-in-progress: true
+
+env:
+  IMAGE: ghcr.io/choimory/choimory-dev-member-api
+  # stg 브랜치는 stg, main 브랜치는 prod. 이미지 태그 접두어와 GitOps overlay 이름으로 쓴다.
+  PROFILE: ${{ github.ref_name == 'main' && 'prod' || 'stg' }}
+
+jobs:
+  # 테스트가 실패하면 이미지를 만들지 않아 배포도 진행되지 않는다.
+  test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # Dockerfile과 같은 JDK 21로 테스트한다.
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+
+      # Testcontainers가 러너의 Docker로 PostgreSQL, Redis를 띄운다.
+      - name: Test
+        run: ./gradlew test --no-daemon
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      # GITHUB_TOKEN으로 GHCR에 이미지를 push하기 위한 권한
+      packages: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Login to GHCR
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Dockerfile의 BuildKit 캐시 마운트와 GitHub Actions 레이어 캐시를 쓰기 위해 필요하다.
+      - name: Setup Buildx
+        uses: docker/setup-buildx-action@v4
+
+      # 환경별로 이미지 태그를 나눈다. 프로필은 실행 시 k8s에서 SPRING_PROFILES_ACTIVE로 주입한다.
+      - name: Build and Push Image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE }}:${{ env.PROFILE }}-${{ github.sha }}
+          # GHCR 패키지를 이 레포와 연결한다.
+          labels: org.opencontainers.image.source=https://github.com/${{ github.repository }}
+          cache-from: type=gha,scope=${{ env.PROFILE }}
+          cache-to: type=gha,mode=max,scope=${{ env.PROFILE }}
+
+      # GITHUB_TOKEN은 다른 레포에 쓸 수 없어 choimory-gitops에 등록한 Deploy Key로 인증한다.
+      # 주의: 이 키는 gitops 레포 쓰기 권한이 있으며, ArgoCD를 통해 클러스터 배포로 이어진다.
+      - name: Checkout GitOps
+        uses: actions/checkout@v7
+        with:
+          repository: choimory/choimory-gitops
+          ref: main
+          path: gitops
+          ssh-key: ${{ secrets.GITOPS_DEPLOY_KEY }}
+
+      # overlay의 이미지 태그를 변경한다. ArgoCD가 변경사항을 감지해 클러스터에 반영한다.
+      # 주의: projects/choimory-dev/member-api/overlays/{stg,prod}가 gitops main 브랜치에 있어야 한다.
+      - name: Update GitOps Image Tag
+        working-directory: gitops
+        run: |
+          cd "projects/choimory-dev/member-api/overlays/${PROFILE}"
+          kustomize edit set image "${IMAGE}:${PROFILE}-${GITHUB_SHA}"
+          cd "${GITHUB_WORKSPACE}/gitops"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add projects/choimory-dev/member-api/overlays
+          git commit -m "deploy: member-api ${PROFILE}-${GITHUB_SHA}"
+
+          # front 워크플로와 동시에 push하면 거부될 수 있어 rebase 후 재시도한다.
+          for attempt in 1 2 3 4 5; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep "${attempt}"
+          done
+          exit 1
