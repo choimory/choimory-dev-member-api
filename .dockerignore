@@ -1,0 +1,31 @@
+# 이미지 빌드에 필요 없는 파일을 빌드 컨텍스트에서 제외해 전송량을 줄이고 캐시 무효화를 막는다.
+# Dockerfile은 필요한 경로(gradle, member-*, docs/flyway)만 COPY하지만, 컨텍스트 전송 자체를 줄이기 위해 둔다.
+
+# 로컬 빌드 결과물과 Gradle 캐시
+.gradle
+build
+**/build
+**/out
+**/bin
+
+# IDE, 에이전트 설정
+.idea
+*.iml
+.agents
+.claude
+
+# Git
+.git
+.gitignore
+.gitattributes
+
+# 문서 (docs/flyway는 빌드에 필요하므로 남긴다)
+*.md
+docs/*
+!docs/flyway
+
+# 로컬 환경 파일
+.env*
+
+Dockerfile
+.dockerignore

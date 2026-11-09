@@ -17,7 +17,7 @@ logging:
   level:
     root: error
     dev.choimory: info
-    org:hibernate.SQL: error
+    org.hibernate.SQL: error
 
 # CORS 허용 Origin. 프론트 주소(스킴, 포트 포함)
 cors:
