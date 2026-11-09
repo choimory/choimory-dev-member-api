@@ -1,6 +1,23 @@
 server:
     port: 8080
 
+management:
+    # 앱 포트(8080)와 분리해 Gateway를 통해 외부로 노출되지 않게 한다.
+    server:
+        port: 8081
+    endpoints:
+        web:
+            exposure:
+                include: health
+    endpoint:
+        health:
+            probes:
+                enabled: true
+    health:
+        # Elasticsearch를 쓰지 않아 health가 DOWN으로 집계되는 것을 막는다.
+        elasticsearch:
+            enabled: false
+
 spring:
     application:
         name: choimory-dev-member-api

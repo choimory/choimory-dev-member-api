@@ -15,6 +15,7 @@ import dev.choimory.member.api.security.handler.SecurityResponseWriter;
 import dev.choimory.member.api.security.handler.UnauthorizedHandler;
 import dev.choimory.member.api.security.user.MemberUserDetailsService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.actuate.autoconfigure.security.servlet.EndpointRequest;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -95,6 +96,9 @@ public class SecurityConfig {
                                 LoginFilter.LOGIN_PATH,
                                 LogoutFilter.LOGOUT_PATH,
                                 "/v1/member/reissue")
+                        .permitAll()
+                        // k8s probe가 토큰 없이 호출한다. 관리 포트(8081)로만 열려 외부에는 노출되지 않는다.
+                        .requestMatchers(EndpointRequest.to("health"))
                         .permitAll()
                         .anyRequest()
                         .authenticated())
