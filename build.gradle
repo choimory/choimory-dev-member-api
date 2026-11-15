@@ -22,6 +22,10 @@ subprojects {
     group = 'dev.choimory'
     version = '0.0.1-SNAPSHOT'
 
+    // Spring Boot 3.5.4가 관리하는 Testcontainers 1.21.3은 최신 Docker 엔진(GitHub Actions 러너)에 접속하지 못해 테스트가 실패한다.
+    // 1.21.4는 최신 Docker 엔진 변경에 대응한 패치 버전이다. Spring Boot를 올려 관리 버전이 1.21.4 이상이 되면 삭제한다.
+    ext['testcontainers.version'] = '1.21.4'
+
     java {
         toolchain {
             languageVersion = JavaLanguageVersion.of(21)
