@@ -3,6 +3,10 @@ plugins {
     id 'io.spring.dependency-management'
 }
 
+// Spring Boot 3.5.4가 관리하는 Testcontainers 1.21.3은 최신 Docker 엔진(GitHub Actions 러너)에 접속하지 못해 테스트가 실패한다.
+// 1.21.4는 최신 Docker 엔진 변경에 대응한 패치 버전이다. Spring Boot를 올려 관리 버전이 1.21.4 이상이 되면 삭제한다.
+ext['testcontainers.version'] = '1.21.4'
+
 // docs/flyway의 마이그레이션 SQL을 클래스패스 db/migration/ 아래로 복사한다. (Flyway가 앱 기동 시 실행)
 processResources {
     from("${rootDir}/docs/flyway") {
