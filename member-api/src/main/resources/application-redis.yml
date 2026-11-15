@@ -1,0 +1,13 @@
+spring:
+  config:
+    activate:
+      on-profile: redis
+
+  # Redis 접속 정보는 환경변수로 받는다. (Refresh Token과 Access Token 블랙리스트 저장)
+  data:
+    redis:
+      host: ${redis-host}
+      port: ${redis-port}
+      # username은 Redis ACL(6 이상)을 쓰는 환경에서만 필요하다. 없으면 비밀번호만으로 접속한다.
+      username: ${redis-username}
+      password: ${redis-password}

@@ -1,0 +1,32 @@
+plugins {
+    id 'java-library'
+    id 'io.spring.dependency-management'
+}
+
+dependencyManagement {
+    imports {
+        mavenBom org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES
+    }
+}
+
+dependencies {
+    api 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'com.github.f4b6a3:uuid-creator:5.3.2'
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    testCompileOnly 'org.projectlombok:lombok'
+    testAnnotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testRuntimeOnly 'org.postgresql:postgresql'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 테스트에서 docs/flyway의 마이그레이션 SQL을 Postgres 컨테이너에 적용하기 위해 경로를 전달한다.
+tasks.named('test') {
+    def migrationDir = file("${rootDir}/docs/flyway")
+    inputs.dir(migrationDir)
+    systemProperty 'docs.flyway.dir', migrationDir.absolutePath
+}

@@ -1,0 +1,25 @@
+spring:
+  config:
+    activate:
+      on-profile: stg
+
+  jpa:
+    show-sql: false
+    generate-ddl: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        show_sql: false
+        format_sql: false
+
+logging:
+  level:
+    root: info
+    dev.choimory: debug
+    org.hibernate.SQL: info
+
+# CORS 허용 Origin. 프론트 주소(스킴, 포트 포함)
+cors:
+  allowed-origins:
+    - https://staging.choimory.dev

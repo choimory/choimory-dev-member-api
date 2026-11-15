@@ -1,0 +1,46 @@
+plugins {
+    id 'org.springframework.boot'
+    id 'io.spring.dependency-management'
+}
+
+// docs/flyway의 마이그레이션 SQL을 클래스패스 db/migration/ 아래로 복사한다. (Flyway가 앱 기동 시 실행)
+processResources {
+    from("${rootDir}/docs/flyway") {
+        into 'db/migration'
+    }
+}
+
+dependencies {
+    implementation project(':member-domain')
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.flywaydb:flyway-core'
+    implementation 'org.flywaydb:flyway-database-postgresql'
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.17.0'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'org.postgresql:postgresql'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-testcontainers'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+// 테스트에서 JWT 서명 키(환경변수 jwt-secret)와 Redis 자리표시자 값을 전달한다. 테스트 전용 값이며 운영 값이 아니다.
+tasks.named('test') {
+    systemProperty 'jwt-secret', 'test-only-jwt-secret-key-must-be-at-least-32-bytes'
+    // Redis 접속 정보는 Testcontainers가 덮어쓰지만, 설정의 자리표시자(${redis-host}, ${redis-port})가 포트 숫자 변환에서 실패하지 않도록 둔다.
+    systemProperty 'redis-host', 'localhost'
+    systemProperty 'redis-port', '6379'
+}

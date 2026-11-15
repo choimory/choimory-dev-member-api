@@ -1,0 +1,11 @@
+spring:
+  config:
+    activate:
+      on-profile: jwt
+
+# JWT 설정. 서명 키는 환경변수 jwt-secret으로 받는다. (HS256, 32바이트 이상)
+jwt:
+  secret: ${jwt-secret}
+  issuer: choimory-dev-member-api
+  access-expiration: 30m
+  refresh-expiration: 14d

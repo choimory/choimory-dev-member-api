@@ -8,3 +8,6 @@ pluginManagement {
 }
 
 rootProject.name = 'choimory-dev-member-api'
+
+include 'member-domain'
+include 'member-api'
